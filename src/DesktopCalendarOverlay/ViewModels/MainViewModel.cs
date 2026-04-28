@@ -44,6 +44,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
         TogglePositionLockCommand = new RelayCommand(() => IsPositionLocked = !IsPositionLocked);
         OpenSettingsWindowCommand = new RelayCommand(() => OpenSettingsRequested?.Invoke(this, EventArgs.Empty));
         OpenCreateEventWindowCommand = new RelayCommand(() => OpenCreateEventRequested?.Invoke(this, EventArgs.Empty));
+        OpenEditEventWindowCommand = new RelayCommand<CalendarEvent>(calendarEvent => OpenEditEventRequested?.Invoke(this, calendarEvent));
+        DeleteEventCommand = new RelayCommand<CalendarEvent>(calendarEvent => DeleteEventRequested?.Invoke(this, calendarEvent));
         ConnectGoogleCommand = new RelayCommand(() => _ = ConnectGoogleAsync());
         DisconnectGoogleCommand = new RelayCommand(() => _ = DisconnectGoogleAsync());
         RefreshCalendarCommand = new RelayCommand(() => _ = LoadCalendarAsync());
@@ -61,6 +63,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public event EventHandler? OpenSettingsRequested;
 
     public event EventHandler? OpenCreateEventRequested;
+
+    public event EventHandler<CalendarEvent>? OpenEditEventRequested;
+
+    public event EventHandler<CalendarEvent>? DeleteEventRequested;
 
     public event EventHandler? PositionLockChanged;
 
@@ -85,6 +91,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand OpenSettingsWindowCommand { get; }
 
     public ICommand OpenCreateEventWindowCommand { get; }
+
+    public ICommand OpenEditEventWindowCommand { get; }
+
+    public ICommand DeleteEventCommand { get; }
 
     public ICommand ConnectGoogleCommand { get; }
 
@@ -332,6 +342,47 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    public async Task UpdateCalendarEventAsync(CalendarEvent calendarEvent)
+    {
+        try
+        {
+            IsBusy = true;
+            var updated = await _calendarService.UpdateEventAsync(calendarEvent);
+            SelectedDate = DateOnly.FromDateTime(updated.StartsAt.LocalDateTime);
+            await LoadCalendarAsync();
+            StatusText = $"Updated event: {updated.Title}";
+        }
+        catch (Exception ex)
+        {
+            AppDiagnostics.Error("Calendar event update failed.", ex);
+            StatusText = $"Unable to update event: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    public async Task DeleteCalendarEventAsync(CalendarEvent calendarEvent)
+    {
+        try
+        {
+            IsBusy = true;
+            await _calendarService.DeleteEventAsync(calendarEvent);
+            await LoadCalendarAsync();
+            StatusText = $"Deleted event: {calendarEvent.Title}";
+        }
+        catch (Exception ex)
+        {
+            AppDiagnostics.Error("Calendar event delete failed.", ex);
+            StatusText = $"Unable to delete event: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
     private void ChangeMonth(int offset)
     {
         _visibleMonth = _visibleMonth.AddMonths(offset);
@@ -411,20 +462,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
-    private async Task SaveLayerColorAsync(CalendarLayer layer)
+    private Task SaveLayerColorAsync(CalendarLayer layer)
     {
         try
         {
             var overrides = LoadLayerColorOverrides();
             overrides[layer.Id] = layer.ColorHex;
             _settingsStore.Write(LayerColorOverridesKey, overrides);
-            await LoadCalendarAsync();
+            ApplyLayerColorToLoadedEvents(layer.Id, layer.ColorHex);
+            StatusText = $"Updated layer color: {layer.Name}";
         }
         catch (Exception ex)
         {
             AppDiagnostics.Error($"Saving calendar layer color failed for calendar '{layer.Id}'.", ex);
             StatusText = $"Unable to save layer color: {ex.Message}";
         }
+
+        return Task.CompletedTask;
     }
 
     private async Task LoadCalendarAsync()
@@ -486,6 +540,29 @@ public sealed class MainViewModel : INotifyPropertyChanged
             AppDiagnostics.Error("Unable to save overlay UI settings.", ex);
             StatusText = $"Unable to save overlay settings: {ex.Message}";
         }
+    }
+
+    private void ApplyLayerColorToLoadedEvents(string layerId, string colorHex)
+    {
+        var updatedDays = Days.Select(day => new CalendarDayViewModel
+        {
+            Date = day.Date,
+            DayNumber = day.DayNumber,
+            IsInCurrentMonth = day.IsInCurrentMonth,
+            IsToday = day.IsToday,
+            IsSelected = day.IsSelected,
+            Events = day.Events
+                .Select(calendarEvent => calendarEvent.CalendarLayerId == layerId
+                    ? calendarEvent with { LayerColorHex = colorHex }
+                    : calendarEvent)
+                .ToList()
+        }).ToList();
+        Replace(Days, updatedDays);
+        Replace(
+            SelectedDayEvents,
+            SelectedDayEvents.Select(calendarEvent => calendarEvent.CalendarLayerId == layerId
+                ? calendarEvent with { LayerColorHex = colorHex }
+                : calendarEvent).ToList());
     }
 
     private static CalendarOverlaySettings NormalizeSettings(CalendarOverlaySettings settings)

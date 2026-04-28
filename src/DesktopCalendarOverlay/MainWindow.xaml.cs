@@ -24,6 +24,8 @@ public partial class MainWindow : Window
         _viewModel = new MainViewModel(calendarService, calendarService, settingsStore);
         _viewModel.OpenSettingsRequested += OnOpenSettingsRequested;
         _viewModel.OpenCreateEventRequested += OnOpenCreateEventRequested;
+        _viewModel.OpenEditEventRequested += OnOpenEditEventRequested;
+        _viewModel.DeleteEventRequested += OnDeleteEventRequested;
         _viewModel.PositionLockChanged += OnPositionLockChanged;
         DataContext = _viewModel;
     }
@@ -42,11 +44,11 @@ public partial class MainWindow : Window
         catch (Exception ex)
         {
             AppDiagnostics.Error("Main window initialization failed.", ex);
-            MessageBox.Show(
+            System.Windows.MessageBox.Show(
                 $"Desktop Calendar Overlay could not finish startup.\n\n{ex.Message}\n\nDiagnostic log:\n{AppDiagnostics.LogPath}",
                 "Desktop Calendar Overlay",
-                MessageBoxButton.OK,
-                MessageBoxImage.Error);
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error);
         }
     }
 
@@ -73,7 +75,7 @@ public partial class MainWindow : Window
     {
         while (source is not null)
         {
-            if (source is ButtonBase)
+            if (source is System.Windows.Controls.Primitives.ButtonBase)
             {
                 return true;
             }
@@ -105,6 +107,32 @@ public partial class MainWindow : Window
         if (createEventWindow.ShowDialog() == true && createEventWindow.CreatedEvent is not null)
         {
             await _viewModel.CreateCalendarEventAsync(createEventWindow.CreatedEvent);
+        }
+    }
+
+    private async void OnOpenEditEventRequested(object? sender, DesktopCalendarOverlay.Models.CalendarEvent calendarEvent)
+    {
+        var editEventWindow = new CreateEventWindow(_viewModel.SelectedDate, _viewModel.CalendarLayers, calendarEvent)
+        {
+            Owner = this
+        };
+
+        if (editEventWindow.ShowDialog() == true && editEventWindow.CreatedEvent is not null)
+        {
+            await _viewModel.UpdateCalendarEventAsync(editEventWindow.CreatedEvent);
+        }
+    }
+
+    private async void OnDeleteEventRequested(object? sender, DesktopCalendarOverlay.Models.CalendarEvent calendarEvent)
+    {
+        var result = System.Windows.MessageBox.Show(
+            $"Delete '{calendarEvent.Title}'?",
+            "Delete event",
+            System.Windows.MessageBoxButton.YesNo,
+            System.Windows.MessageBoxImage.Warning);
+        if (result == System.Windows.MessageBoxResult.Yes)
+        {
+            await _viewModel.DeleteCalendarEventAsync(calendarEvent);
         }
     }
 

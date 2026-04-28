@@ -6,14 +6,35 @@ namespace DesktopCalendarOverlay;
 
 public partial class CreateEventWindow : Window
 {
-    public CreateEventWindow(DateOnly selectedDate, IEnumerable<CalendarLayer> layers)
+    private readonly CalendarEvent? _editingEvent;
+
+    public CreateEventWindow(DateOnly selectedDate, IEnumerable<CalendarLayer> layers, CalendarEvent? editingEvent = null)
     {
         InitializeComponent();
-        EventDatePicker.SelectedDate = selectedDate.ToDateTime(TimeOnly.MinValue);
-        StartTimeBox.Text = "09:00";
-        EndTimeBox.Text = "10:00";
-        CalendarLayerBox.ItemsSource = layers.Where(layer => layer.IsVisible).ToList();
-        CalendarLayerBox.SelectedIndex = CalendarLayerBox.Items.Count > 0 ? 0 : -1;
+        _editingEvent = editingEvent;
+        var visibleLayers = layers.Where(layer => layer.IsVisible || layer.Id == editingEvent?.CalendarLayerId).ToList();
+        CalendarLayerBox.ItemsSource = visibleLayers;
+
+        if (editingEvent is null)
+        {
+            EventDatePicker.SelectedDate = selectedDate.ToDateTime(TimeOnly.MinValue);
+            StartTimeBox.Text = "09:00";
+            EndTimeBox.Text = "10:00";
+            CalendarLayerBox.SelectedIndex = CalendarLayerBox.Items.Count > 0 ? 0 : -1;
+            return;
+        }
+
+        Title = "Edit event";
+        HeadingText.Text = "Edit event";
+        PrimaryActionButton.Content = "Save";
+        TitleBox.Text = editingEvent.Title;
+        EventDatePicker.SelectedDate = editingEvent.StartsAt.LocalDateTime.Date;
+        AllDayCheckBox.IsChecked = editingEvent.IsAllDay;
+        StartTimeBox.Text = editingEvent.StartsAt.LocalDateTime.ToString("HH:mm", CultureInfo.CurrentCulture);
+        EndTimeBox.Text = editingEvent.EndsAt.LocalDateTime.ToString("HH:mm", CultureInfo.CurrentCulture);
+        LocationBox.Text = editingEvent.Location ?? string.Empty;
+        CalendarLayerBox.SelectedItem = visibleLayers.FirstOrDefault(layer => layer.Id == editingEvent.CalendarLayerId);
+        CalendarLayerBox.IsEnabled = false;
     }
 
     public CalendarEvent? CreatedEvent { get; private set; }
@@ -71,13 +92,14 @@ public partial class CreateEventWindow : Window
         }
 
         CreatedEvent = new CalendarEvent(
-            string.Empty,
+            _editingEvent?.Id ?? string.Empty,
             layer.Id,
             title,
             startsAt,
             endsAt,
             AllDayCheckBox.IsChecked == true,
-            string.IsNullOrWhiteSpace(LocationBox.Text) ? null : LocationBox.Text.Trim());
+            string.IsNullOrWhiteSpace(LocationBox.Text) ? null : LocationBox.Text.Trim(),
+            layer.ColorHex);
         DialogResult = true;
     }
 

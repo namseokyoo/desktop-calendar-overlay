@@ -51,6 +51,16 @@ public sealed class CalendarServiceRouter(
             ? googleCalendarService.CreateEventAsync(calendarEvent, cancellationToken)
             : mockCalendarService.CreateEventAsync(calendarEvent, cancellationToken);
 
+    public Task<CalendarEvent> UpdateEventAsync(CalendarEvent calendarEvent, CancellationToken cancellationToken = default) =>
+        IsUsingGoogle
+            ? googleCalendarService.UpdateEventAsync(calendarEvent, cancellationToken)
+            : mockCalendarService.UpdateEventAsync(calendarEvent, cancellationToken);
+
+    public Task DeleteEventAsync(CalendarEvent calendarEvent, CancellationToken cancellationToken = default) =>
+        IsUsingGoogle
+            ? googleCalendarService.DeleteEventAsync(calendarEvent, cancellationToken)
+            : mockCalendarService.DeleteEventAsync(calendarEvent, cancellationToken);
+
     public Task SetLayerVisibilityAsync(string calendarLayerId, bool isVisible, CancellationToken cancellationToken = default) =>
         IsUsingGoogle
             ? googleCalendarService.SetLayerVisibilityAsync(calendarLayerId, isVisible, cancellationToken)

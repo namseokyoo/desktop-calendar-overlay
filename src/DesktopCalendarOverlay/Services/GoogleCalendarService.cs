@@ -166,6 +166,45 @@ public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalen
         }
 
         using var service = await CreateCalendarServiceAsync(forceAuthorization: false, cancellationToken);
+        var inserted = await service.Events.Insert(BuildEventBody(calendarEvent), calendarEvent.CalendarLayerId).ExecuteAsync(cancellationToken);
+        return MapEvent(calendarEvent.CalendarLayerId, inserted) ?? calendarEvent with { Id = inserted.Id ?? string.Empty };
+    }
+
+    public async Task<CalendarEvent> UpdateEventAsync(CalendarEvent calendarEvent, CancellationToken cancellationToken = default)
+    {
+        if (!IsUsingGoogle)
+        {
+            throw new InvalidOperationException("Connect Google Calendar before updating events.");
+        }
+
+        if (string.IsNullOrWhiteSpace(calendarEvent.Id))
+        {
+            throw new InvalidOperationException("Calendar event id is required before updating events.");
+        }
+
+        using var service = await CreateCalendarServiceAsync(forceAuthorization: false, cancellationToken);
+        var updated = await service.Events.Patch(BuildEventBody(calendarEvent), calendarEvent.CalendarLayerId, calendarEvent.Id).ExecuteAsync(cancellationToken);
+        return MapEvent(calendarEvent.CalendarLayerId, updated) ?? calendarEvent;
+    }
+
+    public async Task DeleteEventAsync(CalendarEvent calendarEvent, CancellationToken cancellationToken = default)
+    {
+        if (!IsUsingGoogle)
+        {
+            throw new InvalidOperationException("Connect Google Calendar before deleting events.");
+        }
+
+        if (string.IsNullOrWhiteSpace(calendarEvent.Id))
+        {
+            throw new InvalidOperationException("Calendar event id is required before deleting events.");
+        }
+
+        using var service = await CreateCalendarServiceAsync(forceAuthorization: false, cancellationToken);
+        await service.Events.Delete(calendarEvent.CalendarLayerId, calendarEvent.Id).ExecuteAsync(cancellationToken);
+    }
+
+    private static Event BuildEventBody(CalendarEvent calendarEvent)
+    {
         var requestBody = new Event
         {
             Summary = calendarEvent.Title,
@@ -197,8 +236,7 @@ public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalen
             };
         }
 
-        var inserted = await service.Events.Insert(requestBody, calendarEvent.CalendarLayerId).ExecuteAsync(cancellationToken);
-        return MapEvent(calendarEvent.CalendarLayerId, inserted) ?? calendarEvent with { Id = inserted.Id ?? string.Empty };
+        return requestBody;
     }
 
     public Task SetLayerVisibilityAsync(string calendarLayerId, bool isVisible, CancellationToken cancellationToken = default)

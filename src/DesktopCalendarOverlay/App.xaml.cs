@@ -3,7 +3,7 @@ using DesktopCalendarOverlay.Services;
 
 namespace DesktopCalendarOverlay;
 
-public partial class App : Application
+public partial class App : System.Windows.Application
 {
     protected override void OnStartup(StartupEventArgs e)
     {
@@ -12,7 +12,7 @@ public partial class App : Application
         DispatcherUnhandledException += (_, args) =>
         {
             AppDiagnostics.Error("Unhandled dispatcher exception.", args.Exception);
-            MessageBox.Show(
+            System.Windows.MessageBox.Show(
                 $"Desktop Calendar Overlay failed to start or render.\n\n{args.Exception.Message}\n\nA diagnostic log was written to:\n{AppDiagnostics.LogPath}",
                 "Desktop Calendar Overlay",
                 MessageBoxButton.OK,

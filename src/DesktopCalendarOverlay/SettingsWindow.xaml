@@ -90,24 +90,19 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
                                     <DockPanel Margin="0,6">
-                                        <ComboBox Width="38"
-                                                  Height="26"
-                                                  ItemsSource="{Binding DataContext.LayerColorPalette, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                  SelectedItem="{Binding ColorHex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                                                  SelectionChanged="OnLayerColorSelectionChanged"
-                                                  Margin="0,0,10,0"
-                                                  ToolTip="Change layer color">
-                                            <ComboBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Width="18"
-                                                            Height="18"
-                                                            Background="{Binding}"
-                                                            BorderBrush="{DynamicResource OverlayBorderBrush}"
-                                                            BorderThickness="1"
-                                                            CornerRadius="5" />
-                                                </DataTemplate>
-                                            </ComboBox.ItemTemplate>
-                                        </ComboBox>
+                                        <Button Width="28"
+                                                Height="28"
+                                                Padding="0"
+                                                Margin="0,0,10,0"
+                                                Style="{StaticResource ChromeButtonStyle}"
+                                                Click="OnLayerColorButtonClick"
+                                                ToolTip="Change layer color">
+                                            <Ellipse Width="16"
+                                                     Height="16"
+                                                     Fill="{Binding ColorHex}"
+                                                     Stroke="{DynamicResource OverlayBorderBrush}"
+                                                     StrokeThickness="1" />
+                                        </Button>
                                         <CheckBox Content="{Binding Name}"
                                                   IsChecked="{Binding IsVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                   Command="{Binding DataContext.ToggleLayerVisibilityCommand, RelativeSource={RelativeSource AncestorType=Window}}"

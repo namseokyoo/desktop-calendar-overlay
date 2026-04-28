@@ -36,19 +36,19 @@ public static class ThemePaletteService
 
     private static void SetBrushColor(string resourceKey, string color)
     {
-        if (Application.Current is null)
+        if (System.Windows.Application.Current is null)
         {
             return;
         }
 
-        var parsedColor = (Color)ColorConverter.ConvertFromString(color);
-        if (Application.Current.Resources[resourceKey] is SolidColorBrush brush && !brush.IsFrozen)
+        var parsedColor = (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(color);
+        if (System.Windows.Application.Current.Resources[resourceKey] is SolidColorBrush brush && !brush.IsFrozen)
         {
             brush.Color = parsedColor;
             return;
         }
 
-        Application.Current.Resources[resourceKey] = new SolidColorBrush(parsedColor);
+        System.Windows.Application.Current.Resources[resourceKey] = new SolidColorBrush(parsedColor);
     }
 
     private sealed record Palette(

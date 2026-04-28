@@ -14,4 +14,12 @@ public interface ICalendarService
     Task<CalendarEvent> CreateEventAsync(
         CalendarEvent calendarEvent,
         CancellationToken cancellationToken = default);
+
+    Task<CalendarEvent> UpdateEventAsync(
+        CalendarEvent calendarEvent,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteEventAsync(
+        CalendarEvent calendarEvent,
+        CancellationToken cancellationToken = default);
 }

@@ -16,11 +16,11 @@
             BorderThickness="1"
             CornerRadius="22">
         <StackPanel>
-            <TextBlock Text="Add event"
+            <TextBlock x:Name="HeadingText" Text="Add event"
                        Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                        FontSize="28"
                        FontWeight="SemiBold" />
-            <TextBlock Text="Create a new event in the selected Google Calendar layer."
+            <TextBlock Text="Create or edit an event in the selected Google Calendar layer."
                        TextWrapping="Wrap"
                        Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                        Margin="0,6,0,18" />
@@ -82,7 +82,7 @@
                         Style="{StaticResource ChromeButtonStyle}"
                         Margin="0,0,8,0"
                         Click="OnCancelClick" />
-                <Button Content="Create"
+                <Button x:Name="PrimaryActionButton" Content="Create"
                         Style="{StaticResource ChromeButtonStyle}"
                         Click="OnCreateClick" />
             </StackPanel>

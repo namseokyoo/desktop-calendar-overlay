@@ -57,6 +57,27 @@ public sealed class MockCalendarService : ICalendarService
         return Task.FromResult(created);
     }
 
+    public Task<CalendarEvent> UpdateEventAsync(
+        CalendarEvent calendarEvent,
+        CancellationToken cancellationToken = default)
+    {
+        var index = _createdEvents.FindIndex(existing => existing.Id == calendarEvent.Id);
+        if (index >= 0)
+        {
+            _createdEvents[index] = calendarEvent;
+        }
+
+        return Task.FromResult(calendarEvent);
+    }
+
+    public Task DeleteEventAsync(
+        CalendarEvent calendarEvent,
+        CancellationToken cancellationToken = default)
+    {
+        _createdEvents.RemoveAll(existing => existing.Id == calendarEvent.Id);
+        return Task.CompletedTask;
+    }
+
     private static IEnumerable<CalendarEvent> CreateMockEventsForDate(DateOnly date)
     {
         var seed = date.Day + (date.Month * 3) + date.Year;

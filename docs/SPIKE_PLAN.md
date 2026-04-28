@@ -6,16 +6,17 @@ Validate that WPF is a practical MVP foundation before implementing real Google 
 
 ## Current status
 
-Implementation status: **ready for Windows build/visual validation**.
+Implementation status: **v0.2 UI update ready for Windows build/visual validation**.
 
 This repo now includes a first-pass WPF shell with mock data only:
 
 - Borderless, resizable WPF window using `WindowChrome`.
 - Custom title/drag region with minimize and close controls.
 - Acrylic/minimal dark glass visual direction.
-- 6x7 month calendar mock grid populated through MVVM.
-- Right-side selected-day agenda and calendar layer preview.
-- Settings placeholder panel documenting future auth/layer ownership.
+- 6x7 dense month calendar mock grid populated through MVVM, with weekday column headers only.
+- Previous/next month navigation that regenerates mock events for the visible range.
+- Right-side selected-day agenda with an explicit collapsible/foldable panel.
+- Separate Settings window documenting future auth/layer ownership; settings are not embedded in the right agenda panel.
 - Always-on-top toggle bound to `Topmost` and persisted with window placement.
 - JSON-backed local settings store for window position/size/topmost state.
 - Mock calendar service behind `ICalendarService`; no Google SDK or OAuth coupling.
@@ -57,9 +58,11 @@ Run this spike on Windows with the .NET 8 SDK. The current execution host is mac
 
 ### 5. Mock calendar shell
 
-- [x] Render month grid with mock events.
-- [x] Render selected-day details.
-- [x] Render mock calendar layers.
+- [x] Render dense month grid with top-left date numbers and mock events.
+- [x] Render weekday names only as top column headers.
+- [x] Render selected-day details in a collapsible agenda panel.
+- [x] Open a separate Settings window for Google account and calendar layer placeholders.
+- [x] Render mock calendar layers in Settings.
 - [x] Keep Google auth/layer selection as Settings-owned placeholder only.
 - [x] Avoid real credentials, OAuth flow, Google SDK types, or Google Cloud config.
 

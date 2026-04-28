@@ -11,9 +11,8 @@ namespace DesktopCalendarOverlay.ViewModels;
 public sealed class MainViewModel : INotifyPropertyChanged
 {
     private readonly ICalendarService _calendarService;
-    private readonly DateOnly _visibleMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
-    private readonly RelayCommand _toggleSettingsCommand;
-    private bool _isSettingsOpen;
+    private DateOnly _visibleMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private bool _isDetailPanelExpanded = true;
     private bool _isTopmost;
     private DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today);
     private string _statusText = "Using mock calendar data. Connect Google Calendar later from Settings.";
@@ -21,12 +20,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public MainViewModel(ICalendarService calendarService)
     {
         _calendarService = calendarService;
-        _toggleSettingsCommand = new RelayCommand(() => IsSettingsOpen = !IsSettingsOpen);
-        SelectDateCommand = new RelayCommand<DateOnly>(date => SelectedDate = date);
-        ToggleSettingsCommand = _toggleSettingsCommand;
+        SelectDateCommand = new RelayCommand<DateOnly>(date =>
+        {
+            SelectedDate = date;
+            IsDetailPanelExpanded = true;
+        });
+        PreviousMonthCommand = new RelayCommand(() => ChangeMonth(-1));
+        NextMonthCommand = new RelayCommand(() => ChangeMonth(1));
+        ToggleDetailPanelCommand = new RelayCommand(() => IsDetailPanelExpanded = !IsDetailPanelExpanded);
+        OpenSettingsWindowCommand = new RelayCommand(() => OpenSettingsRequested?.Invoke(this, EventArgs.Empty));
+
+        foreach (var header in BuildWeekdayHeaders())
+        {
+            WeekdayHeaders.Add(header);
+        }
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
+
+    public event EventHandler? OpenSettingsRequested;
+
+    public ObservableCollection<string> WeekdayHeaders { get; } = [];
 
     public ObservableCollection<CalendarLayer> CalendarLayers { get; } = [];
 
@@ -36,7 +50,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public ICommand SelectDateCommand { get; }
 
-    public ICommand ToggleSettingsCommand { get; }
+    public ICommand PreviousMonthCommand { get; }
+
+    public ICommand NextMonthCommand { get; }
+
+    public ICommand ToggleDetailPanelCommand { get; }
+
+    public ICommand OpenSettingsWindowCommand { get; }
 
     public DateOnly SelectedDate
     {
@@ -60,19 +80,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public string MonthTitle => _visibleMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
 
-    public string SettingsButtonText => IsSettingsOpen ? "Hide settings" : "Settings";
-
-    public bool IsSettingsOpen
+    public bool IsDetailPanelExpanded
     {
-        get => _isSettingsOpen;
+        get => _isDetailPanelExpanded;
         set
         {
-            if (SetField(ref _isSettingsOpen, value))
+            if (SetField(ref _isDetailPanelExpanded, value))
             {
-                OnPropertyChanged(nameof(SettingsButtonText));
+                OnPropertyChanged(nameof(DetailPanelWidth));
+                OnPropertyChanged(nameof(DetailPanelToggleText));
+                OnPropertyChanged(nameof(DetailPanelToggleAccessibleText));
             }
         }
     }
+
+    public double DetailPanelWidth => IsDetailPanelExpanded ? 340 : 64;
+
+    public string DetailPanelToggleText => IsDetailPanelExpanded ? "Collapse details" : "Details";
+
+    public string DetailPanelToggleAccessibleText => IsDetailPanelExpanded ? "Collapse detail panel" : "Expand detail panel";
 
     public bool IsTopmost
     {
@@ -92,6 +118,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
         await LoadCalendarAsync();
     }
 
+    private void ChangeMonth(int offset)
+    {
+        _visibleMonth = _visibleMonth.AddMonths(offset);
+        OnPropertyChanged(nameof(MonthTitle));
+        _ = LoadCalendarAsync();
+    }
+
     private async Task LoadCalendarAsync()
     {
         try
@@ -109,12 +142,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 SelectedDayEvents,
                 monthEvents
                     .Where(calendarEvent => DateOnly.FromDateTime(calendarEvent.StartsAt.LocalDateTime) == SelectedDate)
-                    .OrderBy(calendarEvent => calendarEvent.StartsAt)
+                    .OrderBy(calendarEvent => calendarEvent.IsAllDay ? 0 : 1)
+                    .ThenBy(calendarEvent => calendarEvent.StartsAt)
                     .ToList());
 
             StatusText = SelectedDayEvents.Count == 0
                 ? "No events for the selected day. Mock data only; Google sync is intentionally not wired yet."
-                : $"{SelectedDayEvents.Count} mock event{(SelectedDayEvents.Count == 1 ? string.Empty : "s")} selected. Google Calendar auth belongs in Settings later.";
+                : $"{SelectedDayEvents.Count} mock event{(SelectedDayEvents.Count == 1 ? string.Empty : "s")} selected. Google Calendar auth belongs in the separate Settings window later.";
         }
         catch (Exception ex)
         {
@@ -134,20 +168,30 @@ public sealed class MainViewModel : INotifyPropertyChanged
             .Select(date => new CalendarDayViewModel
             {
                 Date = date,
-                DayName = date.ToString("ddd", CultureInfo.CurrentCulture),
                 DayNumber = date.Day.ToString(CultureInfo.CurrentCulture),
                 IsInCurrentMonth = date.Month == monthStart.Month,
                 IsToday = date == today,
                 IsSelected = date == selectedDate,
                 Events = events
                     .Where(calendarEvent => DateOnly.FromDateTime(calendarEvent.StartsAt.LocalDateTime) == date)
-                    .OrderBy(calendarEvent => calendarEvent.StartsAt)
+                    .OrderBy(calendarEvent => calendarEvent.IsAllDay ? 0 : 1)
+                    .ThenBy(calendarEvent => calendarEvent.StartsAt)
                     .ToList()
             })
             .ToList();
     }
 
-    private DateOnly StartOfWeek(DateOnly monthStart)
+    private static IReadOnlyList<string> BuildWeekdayHeaders()
+    {
+        var culture = CultureInfo.CurrentCulture;
+        var firstDayOfWeek = culture.DateTimeFormat.FirstDayOfWeek;
+        return Enumerable.Range(0, 7)
+            .Select(offset => (DayOfWeek)(((int)firstDayOfWeek + offset) % 7))
+            .Select(dayOfWeek => culture.DateTimeFormat.AbbreviatedDayNames[(int)dayOfWeek])
+            .ToList();
+    }
+
+    private static DateOnly StartOfWeek(DateOnly monthStart)
     {
         var firstDayOfWeek = CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
         var delta = ((7 + (int)monthStart.DayOfWeek - (int)firstDayOfWeek) % 7);

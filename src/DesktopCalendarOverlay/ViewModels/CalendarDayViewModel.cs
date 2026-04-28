@@ -6,7 +6,6 @@ public sealed class CalendarDayViewModel
 {
     public required DateOnly Date { get; init; }
 
-    public required string DayName { get; init; }
 
     public required string DayNumber { get; init; }
 
@@ -20,5 +19,9 @@ public sealed class CalendarDayViewModel
 
     public bool HasEvents => Events.Count > 0;
 
-    public IEnumerable<CalendarEvent> PreviewEvents => Events.Take(3);
+    public IEnumerable<CalendarEvent> PreviewEvents => Events.Take(4);
+
+    public int MoreEventCount => Math.Max(0, Events.Count - 4);
+
+    public bool HasMoreEvents => MoreEventCount > 0;
 }

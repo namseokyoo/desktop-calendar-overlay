@@ -20,6 +20,7 @@ public partial class MainWindow : Window
         var settingsStore = new JsonSettingsStore();
         _windowPlacementService = new WindowPlacementService(settingsStore);
         _viewModel = new MainViewModel(new MockCalendarService());
+        _viewModel.OpenSettingsRequested += OnOpenSettingsRequested;
         DataContext = _viewModel;
     }
 
@@ -62,6 +63,17 @@ public partial class MainWindow : Window
         }
 
         return false;
+    }
+
+    private void OnOpenSettingsRequested(object? sender, EventArgs e)
+    {
+        var settingsWindow = new SettingsWindow
+        {
+            Owner = this,
+            DataContext = _viewModel
+        };
+
+        settingsWindow.ShowDialog();
     }
 
     private void OnMinimizeClick(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;

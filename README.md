@@ -18,7 +18,7 @@ Included in MVP planning:
 - Settings-owned Google authentication and calendar layer selection.
 - No edit/delete/repeat/attendee workflows in MVP.
 
-This bootstrap currently contains a skeleton/spike shell only. It uses mock calendar data and does **not** contain Google OAuth credentials, Google Cloud configuration, or a real Calendar API implementation.
+This spike contains a build-ready WPF shell for Windows validation. It uses mock calendar data and does **not** contain Google OAuth credentials, Google Cloud configuration, or a real Calendar API implementation.
 
 ## Prerequisites
 
@@ -35,9 +35,7 @@ Build and visual validation must run on Windows:
 From a Windows terminal at the repository root:
 
 ```powershell
-dotnet --info
-dotnet restore .\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj
-dotnet build .\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj -c Debug
+.\scripts\windows-validate.ps1
 dotnet run --project .\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj
 ```
 
@@ -47,7 +45,8 @@ Manual checks for the first spike:
 2. Always-on-top toggle changes `Topmost` behavior.
 3. Moving/resizing the window, closing it, and reopening it restores placement.
 4. UI remains legible at 100%, 125%, and 150% Windows display scaling.
-5. Mock calendar layers and events render without needing Google credentials.
+5. Settings opens a placeholder panel showing Google sign-in and layer selection belong there later.
+6. Mock calendar layers and events render without needing Google credentials.
 
 See [`scripts/windows-validate.ps1`](scripts/windows-validate.ps1) for a documented validation helper and [`docs/SPIKE_PLAN.md`](docs/SPIKE_PLAN.md) for the spike plan.
 

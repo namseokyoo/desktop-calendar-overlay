@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Windows.Input;
 using DesktopCalendarOverlay.Models;
 using DesktopCalendarOverlay.Services;
 
@@ -9,6 +11,9 @@ namespace DesktopCalendarOverlay.ViewModels;
 public sealed class MainViewModel : INotifyPropertyChanged
 {
     private readonly ICalendarService _calendarService;
+    private readonly DateOnly _visibleMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private readonly RelayCommand _toggleSettingsCommand;
+    private bool _isSettingsOpen;
     private bool _isTopmost;
     private DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today);
     private string _statusText = "Using mock calendar data. Connect Google Calendar later from Settings.";
@@ -16,13 +21,22 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public MainViewModel(ICalendarService calendarService)
     {
         _calendarService = calendarService;
+        _toggleSettingsCommand = new RelayCommand(() => IsSettingsOpen = !IsSettingsOpen);
+        SelectDateCommand = new RelayCommand<DateOnly>(date => SelectedDate = date);
+        ToggleSettingsCommand = _toggleSettingsCommand;
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public ObservableCollection<CalendarLayer> CalendarLayers { get; } = [];
 
-    public ObservableCollection<CalendarEvent> Events { get; } = [];
+    public ObservableCollection<CalendarEvent> SelectedDayEvents { get; } = [];
+
+    public ObservableCollection<CalendarDayViewModel> Days { get; } = [];
+
+    public ICommand SelectDateCommand { get; }
+
+    public ICommand ToggleSettingsCommand { get; }
 
     public DateOnly SelectedDate
     {
@@ -32,14 +46,33 @@ public sealed class MainViewModel : INotifyPropertyChanged
             if (SetField(ref _selectedDate, value))
             {
                 OnPropertyChanged(nameof(SelectedDateText));
-                _ = LoadEventsAsync();
+                OnPropertyChanged(nameof(SelectedDayHeading));
+                _ = LoadCalendarAsync();
             }
         }
     }
 
-    public string SelectedDateText => SelectedDate.ToString("dddd, MMMM d");
+    public string SelectedDateText => SelectedDate.ToString("dddd, MMMM d", CultureInfo.CurrentCulture);
 
-    public string MonthTitle => DateTime.Today.ToString("MMMM yyyy");
+    public string SelectedDayHeading => SelectedDate == DateOnly.FromDateTime(DateTime.Today)
+        ? "Today"
+        : SelectedDate.ToString("dddd", CultureInfo.CurrentCulture);
+
+    public string MonthTitle => _visibleMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
+
+    public string SettingsButtonText => IsSettingsOpen ? "Hide settings" : "Settings";
+
+    public bool IsSettingsOpen
+    {
+        get => _isSettingsOpen;
+        set
+        {
+            if (SetField(ref _isSettingsOpen, value))
+            {
+                OnPropertyChanged(nameof(SettingsButtonText));
+            }
+        }
+    }
 
     public bool IsTopmost
     {
@@ -56,32 +89,77 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public async Task InitializeAsync(bool isTopmost)
     {
         IsTopmost = isTopmost;
-        CalendarLayers.Clear();
-        foreach (var layer in await _calendarService.GetLayersAsync())
-        {
-            CalendarLayers.Add(layer);
-        }
-
-        await LoadEventsAsync();
+        await LoadCalendarAsync();
     }
 
-    private async Task LoadEventsAsync()
+    private async Task LoadCalendarAsync()
     {
         try
         {
-            Events.Clear();
-            foreach (var calendarEvent in await _calendarService.GetEventsAsync(SelectedDate, SelectedDate.AddDays(1)))
-            {
-                Events.Add(calendarEvent);
-            }
+            var monthStart = _visibleMonth;
+            var calendarStart = StartOfWeek(monthStart);
+            var calendarEnd = calendarStart.AddDays(42);
 
-            StatusText = Events.Count == 0
-                ? "No events for the selected day."
-                : $"{Events.Count} event{(Events.Count == 1 ? string.Empty : "s")} for the selected day.";
+            var layers = await _calendarService.GetLayersAsync();
+            var monthEvents = await _calendarService.GetEventsAsync(calendarStart, calendarEnd);
+
+            Replace(CalendarLayers, layers);
+            Replace(Days, BuildDays(calendarStart, monthStart, SelectedDate, monthEvents));
+            Replace(
+                SelectedDayEvents,
+                monthEvents
+                    .Where(calendarEvent => DateOnly.FromDateTime(calendarEvent.StartsAt.LocalDateTime) == SelectedDate)
+                    .OrderBy(calendarEvent => calendarEvent.StartsAt)
+                    .ToList());
+
+            StatusText = SelectedDayEvents.Count == 0
+                ? "No events for the selected day. Mock data only; Google sync is intentionally not wired yet."
+                : $"{SelectedDayEvents.Count} mock event{(SelectedDayEvents.Count == 1 ? string.Empty : "s")} selected. Google Calendar auth belongs in Settings later.";
         }
         catch (Exception ex)
         {
             StatusText = $"Unable to load calendar preview: {ex.Message}";
+        }
+    }
+
+    private static IReadOnlyList<CalendarDayViewModel> BuildDays(
+        DateOnly calendarStart,
+        DateOnly monthStart,
+        DateOnly selectedDate,
+        IReadOnlyList<CalendarEvent> events)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        return Enumerable.Range(0, 42)
+            .Select(offset => calendarStart.AddDays(offset))
+            .Select(date => new CalendarDayViewModel
+            {
+                Date = date,
+                DayName = date.ToString("ddd", CultureInfo.CurrentCulture),
+                DayNumber = date.Day.ToString(CultureInfo.CurrentCulture),
+                IsInCurrentMonth = date.Month == monthStart.Month,
+                IsToday = date == today,
+                IsSelected = date == selectedDate,
+                Events = events
+                    .Where(calendarEvent => DateOnly.FromDateTime(calendarEvent.StartsAt.LocalDateTime) == date)
+                    .OrderBy(calendarEvent => calendarEvent.StartsAt)
+                    .ToList()
+            })
+            .ToList();
+    }
+
+    private DateOnly StartOfWeek(DateOnly monthStart)
+    {
+        var firstDayOfWeek = CultureInfo.CurrentCulture.DateTimeFormat.FirstDayOfWeek;
+        var delta = ((7 + (int)monthStart.DayOfWeek - (int)firstDayOfWeek) % 7);
+        return monthStart.AddDays(-delta);
+    }
+
+    private static void Replace<T>(ObservableCollection<T> collection, IEnumerable<T> values)
+    {
+        collection.Clear();
+        foreach (var value in values)
+        {
+            collection.Add(value);
         }
     }
 

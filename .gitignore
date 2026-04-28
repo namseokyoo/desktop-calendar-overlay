@@ -1,0 +1,61 @@
+# Build output
+bin/
+obj/
+out/
+artifacts/
+TestResults/
+
+# Visual Studio / Rider / VS Code
+.vs/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.rsuser
+
+# .NET / NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+project.lock.json
+project.assets.json
+
+# WPF generated/cache files
+*.g.cs
+*.g.i.cs
+*.baml
+*.cache
+
+# Logs and local runtime data
+*.log
+*.tmp
+*.pid
+
+# Secrets / local config
+*.pfx
+*.p12
+*.key
+*.pem
+*.secrets.json
+appsettings.Development.json
+.env
+.env.*
+
+# OMX runtime state
+.omx/
+
+# Codex local generated state; keep project-scoped prompts/agents/skills if intentionally added
+.codex/*
+!.codex/agents/
+!.codex/agents/**
+!.codex/skills/
+!.codex/skills/**
+.codex/skills/.system/**
+!.codex/prompts/
+!.codex/prompts/**

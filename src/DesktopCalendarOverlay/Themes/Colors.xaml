@@ -1,0 +1,18 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Color x:Key="OverlayBackgroundColor">#D91A2233</Color>
+    <Color x:Key="OverlaySurfaceColor">#A6283447</Color>
+    <Color x:Key="OverlaySurfaceStrongColor">#CC111827</Color>
+    <Color x:Key="OverlayBorderColor">#66FFFFFF</Color>
+    <Color x:Key="OverlayTextPrimaryColor">#FFF8FAFC</Color>
+    <Color x:Key="OverlayTextSecondaryColor">#FFCBD5E1</Color>
+    <Color x:Key="OverlayAccentColor">#FF7DD3FC</Color>
+
+    <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="{StaticResource OverlayBackgroundColor}" />
+    <SolidColorBrush x:Key="OverlaySurfaceBrush" Color="{StaticResource OverlaySurfaceColor}" />
+    <SolidColorBrush x:Key="OverlaySurfaceStrongBrush" Color="{StaticResource OverlaySurfaceStrongColor}" />
+    <SolidColorBrush x:Key="OverlayBorderBrush" Color="{StaticResource OverlayBorderColor}" />
+    <SolidColorBrush x:Key="OverlayTextPrimaryBrush" Color="{StaticResource OverlayTextPrimaryColor}" />
+    <SolidColorBrush x:Key="OverlayTextSecondaryBrush" Color="{StaticResource OverlayTextSecondaryColor}" />
+    <SolidColorBrush x:Key="OverlayAccentBrush" Color="{StaticResource OverlayAccentColor}" />
+</ResourceDictionary>

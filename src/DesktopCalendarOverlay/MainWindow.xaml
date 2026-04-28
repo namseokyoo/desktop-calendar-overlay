@@ -1,0 +1,185 @@
+<Window x:Class="DesktopCalendarOverlay.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+        Title="Desktop Calendar Overlay"
+        Width="1180"
+        Height="760"
+        MinWidth="720"
+        MinHeight="480"
+        WindowStyle="None"
+        ResizeMode="CanResize"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="{Binding IsTopmost, Mode=TwoWay}"
+        Loaded="OnLoaded"
+        Closing="OnClosing"
+        MouseLeftButtonDown="OnMouseLeftButtonDown">
+    <shell:WindowChrome.WindowChrome>
+        <shell:WindowChrome CaptionHeight="0"
+                            CornerRadius="20"
+                            GlassFrameThickness="0"
+                            ResizeBorderThickness="8"
+                            UseAeroCaptionButtons="False" />
+    </shell:WindowChrome.WindowChrome>
+
+    <Border Margin="12"
+            Padding="24"
+            Background="{StaticResource OverlayBackgroundBrush}"
+            BorderBrush="{StaticResource OverlayBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="28">
+        <Border.Effect>
+            <DropShadowEffect BlurRadius="24"
+                              Direction="270"
+                              Opacity="0.35"
+                              ShadowDepth="8" />
+        </Border.Effect>
+
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="360" />
+            </Grid.ColumnDefinitions>
+
+            <DockPanel Grid.ColumnSpan="2" LastChildFill="False">
+                <StackPanel DockPanel.Dock="Left">
+                    <TextBlock Text="Desktop Calendar Overlay"
+                               Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                               FontSize="14" />
+                    <TextBlock Text="{Binding MonthTitle}"
+                               Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                               FontSize="42"
+                               FontWeight="SemiBold" />
+                </StackPanel>
+
+                <StackPanel DockPanel.Dock="Right"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <CheckBox Content="Always on top"
+                              IsChecked="{Binding IsTopmost, Mode=TwoWay}"
+                              Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                              VerticalAlignment="Center"
+                              Margin="0,0,18,0" />
+                    <Button Content="Settings"
+                            Padding="16,8"
+                            Margin="0,0,8,0" />
+                    <Button Content="✕"
+                            Width="36"
+                            Height="36"
+                            Click="OnCloseClick" />
+                </StackPanel>
+            </DockPanel>
+
+            <UniformGrid Grid.Row="1"
+                         Grid.Column="0"
+                         Columns="7"
+                         Rows="6"
+                         Margin="0,28,24,20">
+                <Border Background="{StaticResource OverlaySurfaceBrush}" CornerRadius="18" Margin="6" Padding="14">
+                    <StackPanel>
+                        <TextBlock Text="Mon" Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+                        <TextBlock Text="1" Foreground="{StaticResource OverlayTextPrimaryBrush}" FontSize="30" FontWeight="SemiBold" />
+                        <Border Background="{StaticResource OverlayAccentBrush}" Height="4" CornerRadius="2" Margin="0,18,40,0" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource OverlaySurfaceBrush}" CornerRadius="18" Margin="6" Padding="14">
+                    <StackPanel>
+                        <TextBlock Text="Tue" Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+                        <TextBlock Text="2" Foreground="{StaticResource OverlayTextPrimaryBrush}" FontSize="30" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource OverlaySurfaceBrush}" CornerRadius="18" Margin="6" Padding="14">
+                    <StackPanel>
+                        <TextBlock Text="Wed" Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+                        <TextBlock Text="3" Foreground="{StaticResource OverlayTextPrimaryBrush}" FontSize="30" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource OverlaySurfaceBrush}" CornerRadius="18" Margin="6" Padding="14">
+                    <StackPanel>
+                        <TextBlock Text="Thu" Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+                        <TextBlock Text="4" Foreground="{StaticResource OverlayTextPrimaryBrush}" FontSize="30" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource OverlaySurfaceBrush}" CornerRadius="18" Margin="6" Padding="14">
+                    <StackPanel>
+                        <TextBlock Text="Fri" Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+                        <TextBlock Text="5" Foreground="{StaticResource OverlayTextPrimaryBrush}" FontSize="30" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource OverlaySurfaceBrush}" CornerRadius="18" Margin="6" Padding="14">
+                    <StackPanel>
+                        <TextBlock Text="Sat" Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+                        <TextBlock Text="6" Foreground="{StaticResource OverlayTextPrimaryBrush}" FontSize="30" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+                <Border Background="{StaticResource OverlaySurfaceBrush}" CornerRadius="18" Margin="6" Padding="14">
+                    <StackPanel>
+                        <TextBlock Text="Sun" Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+                        <TextBlock Text="7" Foreground="{StaticResource OverlayTextPrimaryBrush}" FontSize="30" FontWeight="SemiBold" />
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <Border Grid.Row="1"
+                    Grid.Column="1"
+                    Margin="0,28,0,20"
+                    Padding="22"
+                    Background="{StaticResource OverlaySurfaceStrongBrush}"
+                    CornerRadius="24"
+                    BorderBrush="{StaticResource OverlayBorderBrush}"
+                    BorderThickness="1">
+                <StackPanel>
+                    <TextBlock Text="Selected day"
+                               Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                               FontSize="13" />
+                    <TextBlock Text="{Binding SelectedDateText}"
+                               Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                               FontSize="26"
+                               FontWeight="SemiBold"
+                               Margin="0,4,0,20" />
+
+                    <TextBlock Text="Calendar layers"
+                               Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                               Margin="0,0,0,8" />
+                    <ItemsControl ItemsSource="{Binding CalendarLayers}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <DockPanel Margin="0,3">
+                                    <Ellipse Width="10" Height="10" Fill="{StaticResource OverlayAccentBrush}" Margin="0,0,8,0" />
+                                    <TextBlock Text="{Binding Name}" Foreground="{StaticResource OverlayTextPrimaryBrush}" />
+                                </DockPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <TextBlock Text="Agenda"
+                               Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                               Margin="0,24,0,8" />
+                    <ItemsControl ItemsSource="{Binding Events}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Background="{StaticResource OverlaySurfaceBrush}" CornerRadius="14" Padding="12" Margin="0,0,0,10">
+                                    <StackPanel>
+                                        <TextBlock Text="{Binding Title}" Foreground="{StaticResource OverlayTextPrimaryBrush}" FontWeight="SemiBold" />
+                                        <TextBlock Text="{Binding StartsAt, StringFormat={}{0:t}}" Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+                                    </StackPanel>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
+
+            <TextBlock Grid.Row="2"
+                       Grid.ColumnSpan="2"
+                       Text="{Binding StatusText}"
+                       Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+        </Grid>
+    </Border>
+</Window>

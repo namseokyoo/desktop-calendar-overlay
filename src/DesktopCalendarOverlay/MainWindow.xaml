@@ -210,9 +210,9 @@
                                                         <TextBlock FontSize="10"
                                                                    Foreground="{StaticResource OverlayTextPrimaryBrush}"
                                                                    TextTrimming="CharacterEllipsis">
-                                                            <Run Text="{Binding TimeDisplay}" />
+                                                            <Run Text="{Binding TimeDisplay, Mode=OneWay}" />
                                                             <Run Text=" " />
-                                                            <Run Text="{Binding Title}" />
+                                                            <Run Text="{Binding Title, Mode=OneWay}" />
                                                         </TextBlock>
                                                     </Border>
                                                 </DataTemplate>

@@ -6,7 +6,7 @@ public sealed class MockCalendarService : ICalendarService
 {
     private static readonly IReadOnlyList<CalendarLayer> Layers =
     [
-        new("primary", "Focus", "#7DD3FC", true, IsPrimary: true),
+        new("primary", "Focus", "#7DD3FC", true, isPrimary: true),
         new("work", "Work", "#A78BFA", true),
         new("personal", "Personal", "#F9A8D4", true),
         new("home", "Home", "#86EFAC", false)

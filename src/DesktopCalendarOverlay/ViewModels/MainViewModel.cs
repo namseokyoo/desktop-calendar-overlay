@@ -11,15 +11,18 @@ namespace DesktopCalendarOverlay.ViewModels;
 public sealed class MainViewModel : INotifyPropertyChanged
 {
     private readonly ICalendarService _calendarService;
+    private readonly IGoogleCalendarIntegration? _googleIntegration;
     private DateOnly _visibleMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private bool _isBusy;
     private bool _isDetailPanelExpanded = true;
     private bool _isTopmost;
     private DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today);
-    private string _statusText = "Using mock calendar data. Connect Google Calendar later from Settings.";
+    private string _statusText = "Using mock calendar data. Connect Google Calendar from Settings.";
 
-    public MainViewModel(ICalendarService calendarService)
+    public MainViewModel(ICalendarService calendarService, IGoogleCalendarIntegration? googleIntegration = null)
     {
         _calendarService = calendarService;
+        _googleIntegration = googleIntegration;
         SelectDateCommand = new RelayCommand<DateOnly>(date =>
         {
             SelectedDate = date;
@@ -29,6 +32,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
         NextMonthCommand = new RelayCommand(() => ChangeMonth(1));
         ToggleDetailPanelCommand = new RelayCommand(() => IsDetailPanelExpanded = !IsDetailPanelExpanded);
         OpenSettingsWindowCommand = new RelayCommand(() => OpenSettingsRequested?.Invoke(this, EventArgs.Empty));
+        ConnectGoogleCommand = new RelayCommand(() => _ = ConnectGoogleAsync());
+        DisconnectGoogleCommand = new RelayCommand(() => _ = DisconnectGoogleAsync());
+        RefreshCalendarCommand = new RelayCommand(() => _ = LoadCalendarAsync());
+        ToggleLayerVisibilityCommand = new RelayCommand<CalendarLayer>(layer => _ = SaveLayerVisibilityAsync(layer));
 
         foreach (var header in BuildWeekdayHeaders())
         {
@@ -58,6 +65,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public ICommand OpenSettingsWindowCommand { get; }
 
+    public ICommand ConnectGoogleCommand { get; }
+
+    public ICommand DisconnectGoogleCommand { get; }
+
+    public ICommand RefreshCalendarCommand { get; }
+
+    public ICommand ToggleLayerVisibilityCommand { get; }
+
     public DateOnly SelectedDate
     {
         get => _selectedDate;
@@ -79,6 +94,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
         : SelectedDate.ToString("dddd", CultureInfo.CurrentCulture);
 
     public string MonthTitle => _visibleMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
+
+    public bool IsBusy
+    {
+        get => _isBusy;
+        set => SetField(ref _isBusy, value);
+    }
 
     public bool IsDetailPanelExpanded
     {
@@ -112,6 +133,34 @@ public sealed class MainViewModel : INotifyPropertyChanged
         private set => SetField(ref _statusText, value);
     }
 
+    public string GoogleConnectionStatus
+    {
+        get
+        {
+            if (_googleIntegration is null)
+            {
+                return "Google integration unavailable";
+            }
+
+            if (!_googleIntegration.IsClientSecretAvailable)
+            {
+                return "OAuth client JSON not found";
+            }
+
+            return _googleIntegration.IsUsingGoogle
+                ? "Connected to Google Calendar"
+                : "OAuth client found; not connected yet";
+        }
+    }
+
+    public string GoogleClientSecretPath => _googleIntegration?.ClientSecretPath ?? "Unavailable";
+
+    public string GoogleTokenDirectory => _googleIntegration?.TokenDirectory ?? "Unavailable";
+
+    public bool IsGoogleConnected => _googleIntegration?.IsUsingGoogle ?? false;
+
+    public bool IsGoogleClientSecretAvailable => _googleIntegration?.IsClientSecretAvailable ?? false;
+
     public async Task InitializeAsync(bool isTopmost)
     {
         IsTopmost = isTopmost;
@@ -125,10 +174,83 @@ public sealed class MainViewModel : INotifyPropertyChanged
         _ = LoadCalendarAsync();
     }
 
+    private async Task ConnectGoogleAsync()
+    {
+        if (_googleIntegration is null)
+        {
+            StatusText = "Google integration is unavailable in this build.";
+            return;
+        }
+
+        try
+        {
+            IsBusy = true;
+            StatusText = "Opening Google sign-in in your browser...";
+            await _googleIntegration.ConnectAsync();
+            NotifyGoogleStateChanged();
+            await LoadCalendarAsync();
+        }
+        catch (Exception ex)
+        {
+            AppDiagnostics.Error("Google Calendar connect failed.", ex);
+            StatusText = $"Google connect failed: {ex.Message}";
+            NotifyGoogleStateChanged();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task DisconnectGoogleAsync()
+    {
+        if (_googleIntegration is null)
+        {
+            return;
+        }
+
+        try
+        {
+            IsBusy = true;
+            await _googleIntegration.DisconnectAsync();
+            NotifyGoogleStateChanged();
+            await LoadCalendarAsync();
+        }
+        catch (Exception ex)
+        {
+            AppDiagnostics.Error("Google Calendar disconnect failed.", ex);
+            StatusText = $"Google disconnect failed: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private async Task SaveLayerVisibilityAsync(CalendarLayer layer)
+    {
+        if (_googleIntegration is null || !_googleIntegration.IsUsingGoogle)
+        {
+            return;
+        }
+
+        try
+        {
+            await _googleIntegration.SetLayerVisibilityAsync(layer.Id, layer.IsVisible);
+            await LoadCalendarAsync();
+        }
+        catch (Exception ex)
+        {
+            AppDiagnostics.Error($"Saving Google layer visibility failed for calendar '{layer.Id}'.", ex);
+            StatusText = $"Unable to save layer visibility: {ex.Message}";
+        }
+    }
+
     private async Task LoadCalendarAsync()
     {
         try
         {
+            IsBusy = true;
             var monthStart = _visibleMonth;
             var calendarStart = StartOfWeek(monthStart);
             var calendarEnd = calendarStart.AddDays(42);
@@ -146,14 +268,30 @@ public sealed class MainViewModel : INotifyPropertyChanged
                     .ThenBy(calendarEvent => calendarEvent.StartsAt)
                     .ToList());
 
+            NotifyGoogleStateChanged();
+            var sourceLabel = IsGoogleConnected ? "Google Calendar" : "mock calendar";
             StatusText = SelectedDayEvents.Count == 0
-                ? "No events for the selected day. Mock data only; Google sync is intentionally not wired yet."
-                : $"{SelectedDayEvents.Count} mock event{(SelectedDayEvents.Count == 1 ? string.Empty : "s")} selected. Google Calendar auth belongs in the separate Settings window later.";
+                ? $"No events for the selected day. Source: {sourceLabel}."
+                : $"{SelectedDayEvents.Count} event{(SelectedDayEvents.Count == 1 ? string.Empty : "s")} selected. Source: {sourceLabel}.";
         }
         catch (Exception ex)
         {
+            AppDiagnostics.Error("Calendar preview load failed.", ex);
             StatusText = $"Unable to load calendar preview: {ex.Message}";
         }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    private void NotifyGoogleStateChanged()
+    {
+        OnPropertyChanged(nameof(GoogleConnectionStatus));
+        OnPropertyChanged(nameof(GoogleClientSecretPath));
+        OnPropertyChanged(nameof(GoogleTokenDirectory));
+        OnPropertyChanged(nameof(IsGoogleConnected));
+        OnPropertyChanged(nameof(IsGoogleClientSecretAvailable));
     }
 
     private static IReadOnlyList<CalendarDayViewModel> BuildDays(

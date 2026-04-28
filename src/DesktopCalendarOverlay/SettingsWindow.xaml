@@ -20,7 +20,7 @@
                            Foreground="{StaticResource OverlayTextPrimaryBrush}"
                            FontSize="30"
                            FontWeight="SemiBold" />
-                <TextBlock Text="Google account and calendar layer controls live here in v0.2. OAuth and Google Calendar API sync are intentionally disabled placeholders."
+                <TextBlock Text="Google account and calendar layer controls live here. v0.3 can connect a Desktop OAuth client, read Google Calendar layers/events, and falls back to mock data when no local client JSON/token is available."
                            TextWrapping="Wrap"
                            Foreground="{StaticResource OverlayTextSecondaryBrush}"
                            Margin="0,8,0,22" />
@@ -36,18 +36,37 @@
                                    Foreground="{StaticResource OverlayTextPrimaryBrush}"
                                    FontSize="18"
                                    FontWeight="SemiBold" />
-                        <TextBlock Text="Not connected"
+                        <TextBlock Text="{Binding GoogleConnectionStatus}"
                                    Foreground="{StaticResource OverlayAccentBrush}"
                                    FontWeight="SemiBold"
                                    Margin="0,10,0,0" />
-                        <TextBlock Text="Future OAuth sign-in, permission review, disconnect, and cache-clearing actions will be added here. No credentials are requested or stored in this UI spike."
+                        <TextBlock Text="Put the downloaded Google OAuth Desktop app JSON at this path, then click Connect. The browser consent flow stores tokens locally; no credential file is committed to the repo."
                                    TextWrapping="Wrap"
                                    Foreground="{StaticResource OverlayTextSecondaryBrush}"
-                                   Margin="0,6,0,12" />
-                        <Button Content="Connect Google Calendar (disabled mock)"
-                                Style="{StaticResource ChromeButtonStyle}"
-                                HorizontalAlignment="Left"
-                                IsEnabled="False" />
+                                   Margin="0,6,0,8" />
+                        <TextBlock Text="{Binding GoogleClientSecretPath}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{StaticResource OverlayTextMutedBrush}"
+                                   FontSize="11"
+                                   Margin="0,0,0,12" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Connect Google Calendar"
+                                    Command="{Binding ConnectGoogleCommand}"
+                                    Style="{StaticResource ChromeButtonStyle}"
+                                    HorizontalAlignment="Left"
+                                    IsEnabled="{Binding IsGoogleClientSecretAvailable}"
+                                    Margin="0,0,8,0" />
+                            <Button Content="Disconnect"
+                                    Command="{Binding DisconnectGoogleCommand}"
+                                    Style="{StaticResource ChromeButtonStyle}"
+                                    HorizontalAlignment="Left"
+                                    IsEnabled="{Binding IsGoogleConnected}"
+                                    Margin="0,0,8,0" />
+                            <Button Content="Refresh"
+                                    Command="{Binding RefreshCalendarCommand}"
+                                    Style="{StaticResource ChromeButtonStyle}"
+                                    HorizontalAlignment="Left" />
+                        </StackPanel>
                     </StackPanel>
                 </Border>
 
@@ -62,7 +81,7 @@
                                    Foreground="{StaticResource OverlayTextPrimaryBrush}"
                                    FontSize="18"
                                    FontWeight="SemiBold" />
-                        <TextBlock Text="Mock layer visibility is shown for layout only. Real persistence and Google-selected defaults belong to the later sync milestone."
+                        <TextBlock Text="Google Calendar layers are loaded after connecting. Turn layers on/off here; v0.3 stores layer visibility locally and refreshes the month view."
                                    TextWrapping="Wrap"
                                    Foreground="{StaticResource OverlayTextSecondaryBrush}"
                                    Margin="0,6,0,12" />
@@ -75,8 +94,9 @@
                                                  Fill="{Binding ColorHex}"
                                                  Margin="0,0,10,0" />
                                         <CheckBox Content="{Binding Name}"
-                                                  IsChecked="{Binding IsVisible, Mode=OneWay}"
-                                                  IsEnabled="False"
+                                                  IsChecked="{Binding IsVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  Command="{Binding DataContext.ToggleLayerVisibilityCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                  CommandParameter="{Binding}"
                                                   Foreground="{StaticResource OverlayTextPrimaryBrush}" />
                                         <TextBlock Text="Primary"
                                                    Foreground="{StaticResource OverlayAccentBrush}"

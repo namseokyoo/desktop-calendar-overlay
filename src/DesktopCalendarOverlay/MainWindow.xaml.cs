@@ -19,7 +19,9 @@ public partial class MainWindow : Window
 
         var settingsStore = new JsonSettingsStore();
         _windowPlacementService = new WindowPlacementService(settingsStore);
-        _viewModel = new MainViewModel(new MockCalendarService());
+        var googleCalendarService = new GoogleCalendarService(settingsStore);
+        var calendarService = new CalendarServiceRouter(googleCalendarService, new MockCalendarService());
+        _viewModel = new MainViewModel(calendarService, calendarService);
         _viewModel.OpenSettingsRequested += OnOpenSettingsRequested;
         DataContext = _viewModel;
     }

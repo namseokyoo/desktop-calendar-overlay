@@ -1,6 +1,6 @@
 # Desktop Calendar Overlay
 
-Desktop Calendar Overlay is a Windows desktop calendar MVP for keeping a large, low-distraction Google Calendar view visible while working. The MVP direction is a Windows 11-style **acrylic glass + minimal productivity** overlay: a borderless, resizable WPF shell with compact month navigation, a collapsible day-detail panel, and a separate settings window for future Google account/layer controls.
+Desktop Calendar Overlay is a Windows desktop calendar MVP for keeping a large, low-distraction Google Calendar view visible while working. The MVP direction is a Windows 11-style **acrylic glass + minimal productivity** overlay: a borderless, resizable WPF shell with compact month navigation, a collapsible day-detail panel, and a separate settings window for Google account/layer controls.
 
 This is the standalone implementation repository for the Windows Desktop Calendar Overlay app. Planning history and post-MVP ideas remain in the SidequestLab planning project and are intentionally not copied into this MVP implementation scope.
 
@@ -15,10 +15,11 @@ Included in MVP planning:
 - DPI scaling validation on Windows.
 - Google Calendar read support behind service interfaces.
 - Google Calendar create-only write path for user-initiated single-event creation.
-- Separate Settings window for Google authentication placeholders and calendar layer selection placeholders.
+- Separate Settings window for Google authentication, connect/disconnect, and calendar layer selection.
+- v0.3 Google Calendar OAuth/read path with mock fallback when no local client JSON/token is available.
 - No edit/delete/repeat/attendee workflows in MVP.
 
-This spike contains a build-ready WPF shell for Windows validation. It uses mock calendar data and does **not** contain Google OAuth credentials, Google Cloud configuration, or a real Calendar API implementation.
+This build contains a WPF shell plus v0.3 Google Calendar read integration. It does **not** contain Google OAuth credentials, Google Cloud configuration, tokens, or user calendar exports.
 
 ## Prerequisites
 
@@ -49,8 +50,9 @@ Manual checks for the first spike:
 6. Weekday names appear only as top column headers; date numbers sit top-left in compact day cells.
 7. Mock events render inside day cells as small time-ordered list items.
 8. The right agenda panel collapses/expands while preserving selected-day state and giving the calendar more room.
-9. Settings opens as a separate dialog containing Google account and calendar layer placeholders; no OAuth or Google API calls run.
-10. Mock calendar layers and events render without needing Google credentials.
+9. Settings opens as a separate dialog containing Google account connect/disconnect controls and calendar layer toggles.
+10. Without a local OAuth client JSON/token, mock calendar layers and events render safely.
+11. With a valid local OAuth client JSON, Connect opens the Google OAuth browser flow and then loads real calendar layers/events.
 
 See [`scripts/windows-validate.ps1`](scripts/windows-validate.ps1) for a documented validation helper and [`docs/SPIKE_PLAN.md`](docs/SPIKE_PLAN.md) for the spike plan.
 
@@ -64,4 +66,4 @@ scripts/                      Windows-side validation helper
 
 ## Security notes
 
-Do not commit OAuth client secrets, refresh tokens, exported credential files, or Google Cloud project configuration. The planned production integration must keep tokens in a Windows-protected store and must never log secrets or tokens. See [`docs/OAUTH_AND_SECURITY.md`](docs/OAUTH_AND_SECURITY.md).
+Do not commit OAuth client secrets, refresh tokens, exported credential files, or Google Cloud project configuration. For local v0.3 testing, place the Desktop OAuth client JSON at `%LOCALAPPDATA%\DesktopCalendarOverlay\google-oauth-client.json`; the app stores tokens under `%LOCALAPPDATA%\DesktopCalendarOverlay\google-token-store`. See [`docs/OAUTH_AND_SECURITY.md`](docs/OAUTH_AND_SECURITY.md).

@@ -2,7 +2,7 @@
 
 ## Current state
 
-This bootstrap contains no real Google integration. It must not include OAuth credentials, Google Cloud config files, refresh tokens, access tokens, or user calendar exports.
+This build contains a v0.3 Google Calendar read integration. Without a local OAuth Desktop app client JSON and token, it safely falls back to mock calendar data. No OAuth client secrets, refresh tokens, access tokens, or Google Cloud configuration are committed to the repo.
 
 ## OAuth mode for MVP development
 
@@ -10,6 +10,22 @@ This bootstrap contains no real Google integration. It must not include OAuth cr
 - Add only explicit test users while the OAuth consent screen is unverified.
 - Request the minimum scopes needed for calendar read and user-initiated event creation.
 - Explain in Settings that access is used to read calendars and create new events only when the user explicitly saves one.
+
+## Local OAuth file locations
+
+For v0.3 local testing, place the downloaded Google Cloud **Desktop app** OAuth JSON here on Windows:
+
+```text
+%LOCALAPPDATA%\DesktopCalendarOverlay\google-oauth-client.json
+```
+
+The app stores Google OAuth tokens under:
+
+```text
+%LOCALAPPDATA%\DesktopCalendarOverlay\google-token-store
+```
+
+The token store is local-only and must not be committed, copied into release artifacts, pasted into chat, or logged.
 
 ## Create-only write policy
 

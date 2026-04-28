@@ -14,10 +14,10 @@ public sealed class WindowPlacementService(ISettingsStore settingsStore) : IWind
 
     public void Apply(Window window, WindowPlacementState placement)
     {
-        var width = Math.Max(DefaultMinWidth, placement.Width);
-        var height = Math.Max(DefaultMinHeight, placement.Height);
-        var left = placement.Left;
-        var top = placement.Top;
+        var width = IsFinitePositive(placement.Width) ? Math.Max(DefaultMinWidth, placement.Width) : WindowPlacementState.Default.Width;
+        var height = IsFinitePositive(placement.Height) ? Math.Max(DefaultMinHeight, placement.Height) : WindowPlacementState.Default.Height;
+        var left = double.IsFinite(placement.Left) ? placement.Left : WindowPlacementState.Default.Left;
+        var top = double.IsFinite(placement.Top) ? placement.Top : WindowPlacementState.Default.Top;
 
         if (!IsMostlyOnVirtualScreen(left, top, width, height))
         {
@@ -54,6 +54,8 @@ public sealed class WindowPlacementService(ISettingsStore settingsStore) : IWind
             SettingsKey,
             new WindowPlacementState(bounds.Left, bounds.Top, bounds.Width, bounds.Height, isTopmost));
     }
+
+    private static bool IsFinitePositive(double value) => double.IsFinite(value) && value > 0;
 
     private static bool IsMostlyOnVirtualScreen(double left, double top, double width, double height)
     {

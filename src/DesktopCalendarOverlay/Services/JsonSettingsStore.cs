@@ -26,8 +26,16 @@ public sealed class JsonSettingsStore : ISettingsStore
             return default;
         }
 
-        var json = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<T>(json, _jsonOptions);
+        try
+        {
+            var json = File.ReadAllText(path);
+            return JsonSerializer.Deserialize<T>(json, _jsonOptions);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException)
+        {
+            AppDiagnostics.Error($"Unable to read settings key '{key}'. Falling back to defaults.", ex);
+            return default;
+        }
     }
 
     public void Write<T>(string key, T value)

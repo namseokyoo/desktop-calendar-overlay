@@ -26,9 +26,23 @@ public partial class MainWindow : Window
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
-        var placement = _windowPlacementService.Load();
-        _windowPlacementService.Apply(this, placement);
-        await _viewModel.InitializeAsync(placement.IsTopmost);
+        try
+        {
+            AppDiagnostics.Info("Main window loaded; applying placement and loading calendar preview.");
+            var placement = _windowPlacementService.Load();
+            _windowPlacementService.Apply(this, placement);
+            await _viewModel.InitializeAsync(placement.IsTopmost);
+            AppDiagnostics.Info("Main window initialization completed.");
+        }
+        catch (Exception ex)
+        {
+            AppDiagnostics.Error("Main window initialization failed.", ex);
+            MessageBox.Show(
+                $"Desktop Calendar Overlay could not finish startup.\n\n{ex.Message}\n\nDiagnostic log:\n{AppDiagnostics.LogPath}",
+                "Desktop Calendar Overlay",
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
+        }
     }
 
     private void OnClosing(object? sender, CancelEventArgs e) =>

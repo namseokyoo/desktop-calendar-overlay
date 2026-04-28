@@ -30,7 +30,7 @@ jobs:
       - name: Build
         run: dotnet build .\DesktopCalendarOverlay.sln --configuration Release --no-restore
 
-      - name: Publish self-contained Windows x64
+      - name: Publish self-contained Windows x64 single-file
         run: >-
           dotnet publish .\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj
           --configuration Release
@@ -41,23 +41,33 @@ jobs:
           -p:EnableCompressionInSingleFile=true
           --output .\artifacts\publish\desktop-calendar-overlay-win-x64
 
-      - name: Create release zip
+      - name: Publish self-contained Windows x64 portable folder
+        run: >-
+          dotnet publish .\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          -p:PublishSingleFile=false
+          --output .\artifacts\publish\desktop-calendar-overlay-win-x64-portable
+
+      - name: Create release zips
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path .\artifacts\release | Out-Null
           Compress-Archive -Path .\artifacts\publish\desktop-calendar-overlay-win-x64\* -DestinationPath .\artifacts\release\desktop-calendar-overlay-win-x64.zip -Force
+          Compress-Archive -Path .\artifacts\publish\desktop-calendar-overlay-win-x64-portable\* -DestinationPath .\artifacts\release\desktop-calendar-overlay-win-x64-portable.zip -Force
           Get-ChildItem .\artifacts\release
 
-      - name: Upload build artifact
+      - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: desktop-calendar-overlay-win-x64
-          path: .\artifacts\release\desktop-calendar-overlay-win-x64.zip
+          path: .\artifacts\release\*.zip
           if-no-files-found: error
 
       - name: Publish GitHub Release for tags
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
-          files: .\artifacts\release\desktop-calendar-overlay-win-x64.zip
+          files: .\artifacts\release\*.zip
           generate_release_notes: true

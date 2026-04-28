@@ -21,8 +21,9 @@ public partial class MainWindow : Window
         _windowPlacementService = new WindowPlacementService(settingsStore);
         var googleCalendarService = new GoogleCalendarService(settingsStore);
         var calendarService = new CalendarServiceRouter(googleCalendarService, new MockCalendarService());
-        _viewModel = new MainViewModel(calendarService, calendarService);
+        _viewModel = new MainViewModel(calendarService, calendarService, settingsStore);
         _viewModel.OpenSettingsRequested += OnOpenSettingsRequested;
+        _viewModel.OpenCreateEventRequested += OnOpenCreateEventRequested;
         DataContext = _viewModel;
     }
 
@@ -90,6 +91,19 @@ public partial class MainWindow : Window
         };
 
         settingsWindow.ShowDialog();
+    }
+
+    private async void OnOpenCreateEventRequested(object? sender, EventArgs e)
+    {
+        var createEventWindow = new CreateEventWindow(_viewModel.SelectedDate, _viewModel.CalendarLayers)
+        {
+            Owner = this
+        };
+
+        if (createEventWindow.ShowDialog() == true && createEventWindow.CreatedEvent is not null)
+        {
+            await _viewModel.CreateCalendarEventAsync(createEventWindow.CreatedEvent);
+        }
     }
 
     private void OnMinimizeClick(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;

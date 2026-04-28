@@ -158,8 +158,48 @@ public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalen
             .ToList();
     }
 
-    public Task<CalendarEvent> CreateEventAsync(CalendarEvent calendarEvent, CancellationToken cancellationToken = default) =>
-        throw new NotSupportedException("Google event creation is planned for v0.4. v0.3 is auth/read-only.");
+    public async Task<CalendarEvent> CreateEventAsync(CalendarEvent calendarEvent, CancellationToken cancellationToken = default)
+    {
+        if (!IsUsingGoogle)
+        {
+            throw new InvalidOperationException("Connect Google Calendar before creating events.");
+        }
+
+        using var service = await CreateCalendarServiceAsync(forceAuthorization: false, cancellationToken);
+        var requestBody = new Event
+        {
+            Summary = calendarEvent.Title,
+            Location = calendarEvent.Location
+        };
+
+        if (calendarEvent.IsAllDay)
+        {
+            requestBody.Start = new EventDateTime
+            {
+                Date = calendarEvent.StartsAt.LocalDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+            };
+            requestBody.End = new EventDateTime
+            {
+                Date = calendarEvent.EndsAt.LocalDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)
+            };
+        }
+        else
+        {
+            requestBody.Start = new EventDateTime
+            {
+                DateTimeDateTimeOffset = calendarEvent.StartsAt,
+                TimeZone = TimeZoneInfo.Local.Id
+            };
+            requestBody.End = new EventDateTime
+            {
+                DateTimeDateTimeOffset = calendarEvent.EndsAt,
+                TimeZone = TimeZoneInfo.Local.Id
+            };
+        }
+
+        var inserted = await service.Events.Insert(requestBody, calendarEvent.CalendarLayerId).ExecuteAsync(cancellationToken);
+        return MapEvent(calendarEvent.CalendarLayerId, inserted) ?? calendarEvent with { Id = inserted.Id ?? string.Empty };
+    }
 
     public Task SetLayerVisibilityAsync(string calendarLayerId, bool isVisible, CancellationToken cancellationToken = default)
     {

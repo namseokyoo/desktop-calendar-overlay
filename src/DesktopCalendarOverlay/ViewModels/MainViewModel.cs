@@ -10,19 +10,29 @@ namespace DesktopCalendarOverlay.ViewModels;
 
 public sealed class MainViewModel : INotifyPropertyChanged
 {
+    private const string OverlaySettingsKey = "overlay-ui-settings";
+
     private readonly ICalendarService _calendarService;
     private readonly IGoogleCalendarIntegration? _googleIntegration;
+    private readonly ISettingsStore _settingsStore;
     private DateOnly _visibleMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
     private bool _isBusy;
     private bool _isDetailPanelExpanded = true;
     private bool _isTopmost;
     private DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today);
     private string _statusText = "Using mock calendar data. Connect Google Calendar from Settings.";
+    private CalendarOverlaySettings _overlaySettings = new();
 
-    public MainViewModel(ICalendarService calendarService, IGoogleCalendarIntegration? googleIntegration = null)
+    public MainViewModel(
+        ICalendarService calendarService,
+        IGoogleCalendarIntegration? googleIntegration = null,
+        ISettingsStore? settingsStore = null)
     {
         _calendarService = calendarService;
         _googleIntegration = googleIntegration;
+        _settingsStore = settingsStore ?? new JsonSettingsStore();
+        _overlaySettings = NormalizeSettings(_settingsStore.Read<CalendarOverlaySettings>(OverlaySettingsKey) ?? new CalendarOverlaySettings());
+        ThemePaletteService.Apply(_overlaySettings.ThemeName);
         SelectDateCommand = new RelayCommand<DateOnly>(date =>
         {
             SelectedDate = date;
@@ -32,6 +42,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         NextMonthCommand = new RelayCommand(() => ChangeMonth(1));
         ToggleDetailPanelCommand = new RelayCommand(() => IsDetailPanelExpanded = !IsDetailPanelExpanded);
         OpenSettingsWindowCommand = new RelayCommand(() => OpenSettingsRequested?.Invoke(this, EventArgs.Empty));
+        OpenCreateEventWindowCommand = new RelayCommand(() => OpenCreateEventRequested?.Invoke(this, EventArgs.Empty));
         ConnectGoogleCommand = new RelayCommand(() => _ = ConnectGoogleAsync());
         DisconnectGoogleCommand = new RelayCommand(() => _ = DisconnectGoogleAsync());
         RefreshCalendarCommand = new RelayCommand(() => _ = LoadCalendarAsync());
@@ -46,6 +57,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public event PropertyChangedEventHandler? PropertyChanged;
 
     public event EventHandler? OpenSettingsRequested;
+
+    public event EventHandler? OpenCreateEventRequested;
 
     public ObservableCollection<string> WeekdayHeaders { get; } = [];
 
@@ -64,6 +77,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand ToggleDetailPanelCommand { get; }
 
     public ICommand OpenSettingsWindowCommand { get; }
+
+    public ICommand OpenCreateEventWindowCommand { get; }
 
     public ICommand ConnectGoogleCommand { get; }
 
@@ -127,6 +142,79 @@ public sealed class MainViewModel : INotifyPropertyChanged
         set => SetField(ref _isTopmost, value);
     }
 
+    public IReadOnlyList<string> EventDisplayModeOptions { get; } =
+    [
+        CalendarEventDisplayModes.TimeFirst,
+        CalendarEventDisplayModes.EventFirst
+    ];
+
+    public IReadOnlyList<string> ThemeOptions { get; } =
+    [
+        CalendarThemeNames.AcrylicDark,
+        CalendarThemeNames.IvoryEditorial,
+        CalendarThemeNames.MidnightBlue
+    ];
+
+    public string SelectedEventDisplayMode
+    {
+        get => _overlaySettings.EventDisplayMode;
+        set
+        {
+            var normalized = value == CalendarEventDisplayModes.EventFirst
+                ? CalendarEventDisplayModes.EventFirst
+                : CalendarEventDisplayModes.TimeFirst;
+            if (_overlaySettings.EventDisplayMode == normalized)
+            {
+                return;
+            }
+
+            _overlaySettings = _overlaySettings with { EventDisplayMode = normalized };
+            SaveOverlaySettings();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(IsEventFirstDisplay));
+        }
+    }
+
+    public bool IsEventFirstDisplay => SelectedEventDisplayMode == CalendarEventDisplayModes.EventFirst;
+
+    public double OverlayOpacity
+    {
+        get => _overlaySettings.OverlayOpacity;
+        set
+        {
+            var normalized = Math.Clamp(Math.Round(value, 2), 0.35, 1.0);
+            if (Math.Abs(_overlaySettings.OverlayOpacity - normalized) < 0.001)
+            {
+                return;
+            }
+
+            _overlaySettings = _overlaySettings with { OverlayOpacity = normalized };
+            SaveOverlaySettings();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(OverlayOpacityPercentText));
+        }
+    }
+
+    public string OverlayOpacityPercentText => $"{OverlayOpacity:P0}";
+
+    public string SelectedThemeName
+    {
+        get => _overlaySettings.ThemeName;
+        set
+        {
+            var normalized = ThemeOptions.Contains(value) ? value : CalendarThemeNames.AcrylicDark;
+            if (_overlaySettings.ThemeName == normalized)
+            {
+                return;
+            }
+
+            _overlaySettings = _overlaySettings with { ThemeName = normalized };
+            ThemePaletteService.Apply(normalized);
+            SaveOverlaySettings();
+            OnPropertyChanged();
+        }
+    }
+
     public string StatusText
     {
         get => _statusText;
@@ -165,6 +253,27 @@ public sealed class MainViewModel : INotifyPropertyChanged
     {
         IsTopmost = isTopmost;
         await LoadCalendarAsync();
+    }
+
+    public async Task CreateCalendarEventAsync(CalendarEvent calendarEvent)
+    {
+        try
+        {
+            IsBusy = true;
+            var created = await _calendarService.CreateEventAsync(calendarEvent);
+            SelectedDate = DateOnly.FromDateTime(created.StartsAt.LocalDateTime);
+            await LoadCalendarAsync();
+            StatusText = $"Created event: {created.Title}";
+        }
+        catch (Exception ex)
+        {
+            AppDiagnostics.Error("Calendar event creation failed.", ex);
+            StatusText = $"Unable to create event: {ex.Message}";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     private void ChangeMonth(int offset)
@@ -292,6 +401,36 @@ public sealed class MainViewModel : INotifyPropertyChanged
         OnPropertyChanged(nameof(GoogleTokenDirectory));
         OnPropertyChanged(nameof(IsGoogleConnected));
         OnPropertyChanged(nameof(IsGoogleClientSecretAvailable));
+    }
+
+    private void SaveOverlaySettings()
+    {
+        try
+        {
+            _settingsStore.Write(OverlaySettingsKey, _overlaySettings);
+        }
+        catch (Exception ex)
+        {
+            AppDiagnostics.Error("Unable to save overlay UI settings.", ex);
+            StatusText = $"Unable to save overlay settings: {ex.Message}";
+        }
+    }
+
+    private static CalendarOverlaySettings NormalizeSettings(CalendarOverlaySettings settings)
+    {
+        var displayMode = settings.EventDisplayMode == CalendarEventDisplayModes.EventFirst
+            ? CalendarEventDisplayModes.EventFirst
+            : CalendarEventDisplayModes.TimeFirst;
+        var themeName = settings.ThemeName is CalendarThemeNames.IvoryEditorial or CalendarThemeNames.MidnightBlue
+            ? settings.ThemeName
+            : CalendarThemeNames.AcrylicDark;
+        var opacity = Math.Clamp(settings.OverlayOpacity, 0.35, 1.0);
+        return settings with
+        {
+            EventDisplayMode = displayMode,
+            ThemeName = themeName,
+            OverlayOpacity = opacity
+        };
     }
 
     private static IReadOnlyList<CalendarDayViewModel> BuildDays(

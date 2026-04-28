@@ -16,10 +16,11 @@ Included in MVP planning:
 - Google Calendar read support behind service interfaces.
 - Google Calendar create-only write path for user-initiated single-event creation.
 - Separate Settings window for Google authentication, connect/disconnect, and calendar layer selection.
-- v0.3 Google Calendar OAuth/read path with mock fallback when no local client JSON/token is available.
+- v0.4 Google Calendar OAuth/read/create path with mock fallback when no local client JSON/token is available.
+- Today date highlight, display-format setting, opacity slider, and theme selector in Settings.
 - No edit/delete/repeat/attendee workflows in MVP.
 
-This build contains a WPF shell plus v0.3 Google Calendar read integration. It does **not** contain Google OAuth credentials, Google Cloud configuration, tokens, or user calendar exports.
+This build contains a WPF shell plus v0.4 Google Calendar read/create integration. It does **not** contain Google OAuth credentials, Google Cloud configuration, tokens, or user calendar exports.
 
 ## Prerequisites
 
@@ -53,6 +54,9 @@ Manual checks for the first spike:
 9. Settings opens as a separate dialog containing Google account connect/disconnect controls and calendar layer toggles.
 10. Without a local OAuth client JSON/token, mock calendar layers and events render safely.
 11. With a valid local OAuth client JSON, Connect opens the Google OAuth browser flow and then loads real calendar layers/events.
+12. Click `+ Add event` from the selected-day panel, create a single event, and verify it appears in Google Calendar after refresh.
+13. Settings can switch event display between `time · event` and `event · time` while preserving time sorting.
+14. Settings can adjust overlay opacity and switch between built-in themes.
 
 See [`scripts/windows-validate.ps1`](scripts/windows-validate.ps1) for a documented validation helper and [`docs/SPIKE_PLAN.md`](docs/SPIKE_PLAN.md) for the spike plan.
 
@@ -66,4 +70,4 @@ scripts/                      Windows-side validation helper
 
 ## Security notes
 
-Do not commit OAuth client secrets, refresh tokens, exported credential files, or Google Cloud project configuration. For local v0.3 testing, place the Desktop OAuth client JSON at `%LOCALAPPDATA%\DesktopCalendarOverlay\google-oauth-client.json`; the app stores tokens under `%LOCALAPPDATA%\DesktopCalendarOverlay\google-token-store`. See [`docs/OAUTH_AND_SECURITY.md`](docs/OAUTH_AND_SECURITY.md).
+Do not commit OAuth client secrets, refresh tokens, exported credential files, or Google Cloud project configuration. For local v0.4 testing, place the Desktop OAuth client JSON at `%LOCALAPPDATA%\DesktopCalendarOverlay\google-oauth-client.json`; the app stores tokens under `%LOCALAPPDATA%\DesktopCalendarOverlay\google-token-store`. See [`docs/OAUTH_AND_SECURITY.md`](docs/OAUTH_AND_SECURITY.md).

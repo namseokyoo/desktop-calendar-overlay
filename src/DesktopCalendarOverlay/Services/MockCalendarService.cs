@@ -28,6 +28,10 @@ public sealed class MockCalendarService : ICalendarService
             events.AddRange(CreateMockEventsForDate(date));
         }
 
+        events.AddRange(_createdEvents.Where(calendarEvent =>
+            DateOnly.FromDateTime(calendarEvent.StartsAt.LocalDateTime) >= fromInclusive &&
+            DateOnly.FromDateTime(calendarEvent.StartsAt.LocalDateTime) < toExclusive));
+
         var filtered = events
             .Where(calendarEvent => visibleLayerIds.Contains(calendarEvent.CalendarLayerId))
             .OrderBy(calendarEvent => calendarEvent.IsAllDay ? 0 : 1)
@@ -37,10 +41,21 @@ public sealed class MockCalendarService : ICalendarService
         return Task.FromResult<IReadOnlyList<CalendarEvent>>(filtered);
     }
 
+    private readonly List<CalendarEvent> _createdEvents = [];
+
     public Task<CalendarEvent> CreateEventAsync(
         CalendarEvent calendarEvent,
-        CancellationToken cancellationToken = default) =>
-        Task.FromResult(calendarEvent);
+        CancellationToken cancellationToken = default)
+    {
+        var created = calendarEvent with
+        {
+            Id = string.IsNullOrWhiteSpace(calendarEvent.Id)
+                ? $"mock-created-{Guid.NewGuid():N}"
+                : calendarEvent.Id
+        };
+        _createdEvents.Add(created);
+        return Task.FromResult(created);
+    }
 
     private static IEnumerable<CalendarEvent> CreateMockEventsForDate(DateOnly date)
     {

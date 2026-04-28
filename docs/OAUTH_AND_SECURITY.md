@@ -2,7 +2,7 @@
 
 ## Current state
 
-This build contains a v0.3 Google Calendar read integration. Without a local OAuth Desktop app client JSON and token, it safely falls back to mock calendar data. No OAuth client secrets, refresh tokens, access tokens, or Google Cloud configuration are committed to the repo.
+This build contains a v0.4 Google Calendar read/create integration. Without a local OAuth Desktop app client JSON and token, it safely falls back to mock calendar data. No OAuth client secrets, refresh tokens, access tokens, or Google Cloud configuration are committed to the repo.
 
 ## OAuth mode for MVP development
 
@@ -13,7 +13,7 @@ This build contains a v0.3 Google Calendar read integration. Without a local OAu
 
 ## Local OAuth file locations
 
-For v0.3 local testing, place the downloaded Google Cloud **Desktop app** OAuth JSON here on Windows:
+For v0.4 local testing, place the downloaded Google Cloud **Desktop app** OAuth JSON here on Windows:
 
 ```text
 %LOCALAPPDATA%\DesktopCalendarOverlay\google-oauth-client.json
@@ -32,6 +32,7 @@ The token store is local-only and must not be committed, copied into release art
 The MVP write policy is intentionally narrow:
 
 - Allow creating a single event initiated by the user from the app UI.
+- Event creation sends only title, calendar layer, start/end or all-day date, and optional location to Google Calendar.
 - Do not edit existing events in MVP.
 - Do not delete events in MVP.
 - Do not create repeat rules in MVP.

@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
         Title="Desktop Calendar Overlay"
+        Icon="Assets/calendar-app-icon.png"
         Width="1180"
         Height="760"
         MinWidth="820"
@@ -48,8 +49,8 @@
     <Border Margin="12"
             Padding="22"
             Opacity="{Binding OverlayOpacity}"
-            Background="{StaticResource OverlayBackgroundBrush}"
-            BorderBrush="{StaticResource OverlayBorderBrush}"
+            Background="{DynamicResource OverlayBackgroundBrush}"
+            BorderBrush="{DynamicResource OverlayBorderBrush}"
             BorderThickness="1"
             CornerRadius="28">
         <Border.Effect>
@@ -98,10 +99,10 @@
 
                 <StackPanel Grid.Column="1">
                     <TextBlock Text="Desktop Calendar Overlay"
-                               Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                               Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                FontSize="13" />
                     <TextBlock Text="{Binding MonthTitle}"
-                               Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                               Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                FontSize="38"
                                FontWeight="SemiBold" />
                 </StackPanel>
@@ -111,7 +112,7 @@
                             VerticalAlignment="Center">
                     <CheckBox Content="Always on top"
                               IsChecked="{Binding IsTopmost, Mode=TwoWay}"
-                              Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                              Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                               VerticalAlignment="Center"
                               Margin="0,0,18,0" />
                     <Button Content="Settings"
@@ -150,7 +151,7 @@
                             <Border Margin="4,0,4,8"
                                     Padding="8,0">
                                 <TextBlock Text="{Binding}"
-                                           Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                                           Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                            FontSize="12"
                                            FontWeight="SemiBold"
                                            TextAlignment="Left" />
@@ -174,8 +175,8 @@
                                 <Border x:Name="DayCard"
                                         MinHeight="70"
                                         Padding="8"
-                                        Background="{StaticResource OverlaySurfaceBrush}"
-                                        BorderBrush="{StaticResource OverlayBorderBrush}"
+                                        Background="{DynamicResource OverlaySurfaceBrush}"
+                                        BorderBrush="{DynamicResource OverlayBorderBrush}"
                                         BorderThickness="1"
                                         CornerRadius="14">
                                     <Grid>
@@ -188,12 +189,12 @@
                                         <DockPanel>
                                             <TextBlock x:Name="TopLeftDateNumber"
                                                        Text="{Binding DayNumber}"
-                                                       Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                                                       Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                                        FontSize="18"
                                                        FontWeight="SemiBold"
                                                        HorizontalAlignment="Left" />
                                             <TextBlock Text="TODAY"
-                                                       Foreground="{StaticResource OverlayAccentBrush}"
+                                                       Foreground="{DynamicResource OverlayAccentBrush}"
                                                        FontSize="9"
                                                        FontWeight="Bold"
                                                        Margin="0,3,6,0"
@@ -201,7 +202,7 @@
                                                        Visibility="{Binding IsToday, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                             <Ellipse Width="6"
                                                      Height="6"
-                                                     Fill="{StaticResource OverlayAccentBrush}"
+                                                     Fill="{DynamicResource OverlayAccentBrush}"
                                                      DockPanel.Dock="Right"
                                                      Visibility="{Binding HasEvents, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         </DockPanel>
@@ -211,14 +212,14 @@
                                                       Margin="0,4,0,0">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border Background="{StaticResource OverlayAccentSoftBrush}"
+                                                    <Border Background="{DynamicResource OverlayAccentSoftBrush}"
                                                             CornerRadius="6"
                                                             Padding="4,1"
                                                             Margin="0,0,0,2">
                                                         <Grid>
                                                             <TextBlock x:Name="TimeFirstPreviewText"
                                                                        FontSize="10"
-                                                                       Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                                                                       Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                                                        TextTrimming="CharacterEllipsis">
                                                                 <Run Text="{Binding TimeDisplay, Mode=OneWay}" />
                                                                 <Run Text=" " />
@@ -227,7 +228,7 @@
                                                             <TextBlock x:Name="EventFirstPreviewText"
                                                                        Visibility="Collapsed"
                                                                        FontSize="10"
-                                                                       Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                                                                       Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                                                        TextTrimming="CharacterEllipsis">
                                                                 <Run Text="{Binding Title, Mode=OneWay}" />
                                                                 <Run Text=" · " />
@@ -247,7 +248,7 @@
 
                                         <TextBlock Grid.Row="2"
                                                    Text="{Binding MoreEventCount, StringFormat=+{0} more}"
-                                                   Foreground="{StaticResource OverlayTextMutedBrush}"
+                                                   Foreground="{DynamicResource OverlayTextMutedBrush}"
                                                    FontSize="10"
                                                    Visibility="{Binding HasMoreEvents, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                     </Grid>
@@ -256,17 +257,17 @@
                             <DataTemplate.Triggers>
                                 <DataTrigger Binding="{Binding IsInCurrentMonth}" Value="False">
                                     <Setter TargetName="DayCard" Property="Opacity" Value="0.45" />
-                                    <Setter TargetName="DayCard" Property="Background" Value="{StaticResource OverlaySurfaceMutedBrush}" />
+                                    <Setter TargetName="DayCard" Property="Background" Value="{DynamicResource OverlaySurfaceMutedBrush}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding IsToday}" Value="True">
-                                    <Setter TargetName="DayCard" Property="BorderBrush" Value="{StaticResource OverlayAccentBrush}" />
+                                    <Setter TargetName="DayCard" Property="BorderBrush" Value="{DynamicResource OverlayAccentBrush}" />
                                     <Setter TargetName="DayCard" Property="BorderThickness" Value="2" />
-                                    <Setter TargetName="DayCard" Property="Background" Value="{StaticResource OverlayAccentSoftBrush}" />
-                                    <Setter TargetName="TopLeftDateNumber" Property="Foreground" Value="{StaticResource OverlayAccentBrush}" />
+                                    <Setter TargetName="DayCard" Property="Background" Value="{DynamicResource OverlayAccentSoftBrush}" />
+                                    <Setter TargetName="TopLeftDateNumber" Property="Foreground" Value="{DynamicResource OverlayAccentBrush}" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                    <Setter TargetName="DayCard" Property="Background" Value="{StaticResource OverlayAccentSoftBrush}" />
-                                    <Setter TargetName="DayCard" Property="BorderBrush" Value="{StaticResource OverlayAccentBrush}" />
+                                    <Setter TargetName="DayCard" Property="Background" Value="{DynamicResource OverlayAccentSoftBrush}" />
+                                    <Setter TargetName="DayCard" Property="BorderBrush" Value="{DynamicResource OverlayAccentBrush}" />
                                 </DataTrigger>
                             </DataTemplate.Triggers>
                         </DataTemplate>
@@ -279,9 +280,9 @@
                     Width="{Binding DetailPanelWidth}"
                     Margin="0,20,0,14"
                     Padding="16"
-                    Background="{StaticResource OverlaySurfaceStrongBrush}"
+                    Background="{DynamicResource OverlaySurfaceStrongBrush}"
                     CornerRadius="24"
-                    BorderBrush="{StaticResource OverlayBorderBrush}"
+                    BorderBrush="{DynamicResource OverlayBorderBrush}"
                     BorderThickness="1">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -299,7 +300,7 @@
                                 Style="{StaticResource CollapsedDetailVisibilityStyle}"
                                 VerticalAlignment="Center">
                         <TextBlock Text="Agenda"
-                                   Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                                   Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                    FontSize="13"
                                    FontWeight="SemiBold"
                                    TextAlignment="Center"
@@ -311,10 +312,10 @@
                                   VerticalScrollBarVisibility="Auto">
                         <StackPanel Style="{StaticResource ExpandedDetailVisibilityStyle}">
                             <TextBlock Text="{Binding SelectedDayHeading}"
-                                       Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                                       Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                        FontSize="13" />
                             <TextBlock Text="{Binding SelectedDateText}"
-                                       Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                                       Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                        FontSize="24"
                                        FontWeight="SemiBold"
                                        Margin="0,4,0,6" />
@@ -324,7 +325,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="{Binding SelectedDayEvents.Count, StringFormat={}{0} events}"
-                                           Foreground="{StaticResource OverlayTextMutedBrush}"
+                                           Foreground="{DynamicResource OverlayTextMutedBrush}"
                                            FontSize="12"
                                            VerticalAlignment="Center" />
                                 <Button Grid.Column="1"
@@ -335,45 +336,45 @@
                             </Grid>
 
                             <TextBlock Text="Agenda"
-                                       Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                                       Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                        Margin="0,0,0,8" />
                             <ItemsControl ItemsSource="{Binding SelectedDayEvents}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource OverlaySurfaceBrush}"
+                                        <Border Background="{DynamicResource OverlaySurfaceBrush}"
                                                 CornerRadius="14"
                                                 Padding="12"
                                                 Margin="0,0,0,10">
                                             <StackPanel>
                                                 <TextBlock x:Name="TimeFirstDetailTime"
                                                            Text="{Binding TimeDisplay, Mode=OneWay}"
-                                                           Foreground="{StaticResource OverlayAccentBrush}"
+                                                           Foreground="{DynamicResource OverlayAccentBrush}"
                                                            FontSize="12"
                                                            FontWeight="SemiBold" />
                                                 <TextBlock x:Name="TimeFirstDetailTitle"
                                                            Text="{Binding Title, Mode=OneWay}"
-                                                           Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                                                           Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                                            FontWeight="SemiBold"
                                                            TextWrapping="Wrap"
                                                            Margin="0,2,0,0" />
                                                 <TextBlock x:Name="EventFirstDetailTitle"
                                                            Visibility="Collapsed"
                                                            Text="{Binding Title, Mode=OneWay}"
-                                                           Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                                                           Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                                            FontWeight="SemiBold"
                                                            TextWrapping="Wrap" />
                                                 <TextBlock x:Name="EventFirstDetailTime"
                                                            Visibility="Collapsed"
                                                            Text="{Binding TimeDisplay, Mode=OneWay}"
-                                                           Foreground="{StaticResource OverlayAccentBrush}"
+                                                           Foreground="{DynamicResource OverlayAccentBrush}"
                                                            FontSize="12"
                                                            FontWeight="SemiBold"
                                                            Margin="0,2,0,0" />
                                                 <TextBlock Text="{Binding CalendarLayerId, StringFormat=Layer: {0}}"
-                                                           Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                                                           Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                                            FontSize="12" />
                                                 <TextBlock Text="{Binding Location}"
-                                                           Foreground="{StaticResource OverlayTextMutedBrush}"
+                                                           Foreground="{DynamicResource OverlayTextMutedBrush}"
                                                            FontSize="12" />
                                             </StackPanel>
                                         </Border>
@@ -396,7 +397,7 @@
             <TextBlock Grid.Row="2"
                        Grid.ColumnSpan="2"
                        Text="{Binding StatusText}"
-                       Foreground="{StaticResource OverlayTextMutedBrush}"
+                       Foreground="{DynamicResource OverlayTextMutedBrush}"
                        FontSize="12"
                        TextWrapping="Wrap" />
         </Grid>

@@ -25,9 +25,9 @@
     <SolidColorBrush x:Key="OverlayAccentSoftBrush" Color="{StaticResource OverlayAccentSoftColor}" />
 
     <Style x:Key="ChromeButtonStyle" TargetType="Button">
-        <Setter Property="Foreground" Value="{StaticResource OverlayTextPrimaryBrush}" />
-        <Setter Property="Background" Value="{StaticResource OverlaySurfaceBrush}" />
-        <Setter Property="BorderBrush" Value="{StaticResource OverlayBorderBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource OverlayTextPrimaryBrush}" />
+        <Setter Property="Background" Value="{DynamicResource OverlaySurfaceBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource OverlayBorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="14,8" />
         <Setter Property="Cursor" Value="Hand" />
@@ -46,8 +46,8 @@
         </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{StaticResource OverlayAccentSoftBrush}" />
-                <Setter Property="BorderBrush" Value="{StaticResource OverlayBorderStrongBrush}" />
+                <Setter Property="Background" Value="{DynamicResource OverlayAccentSoftBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource OverlayBorderStrongBrush}" />
             </Trigger>
         </Style.Triggers>
     </Style>

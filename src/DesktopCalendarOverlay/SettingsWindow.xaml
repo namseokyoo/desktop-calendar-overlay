@@ -2,51 +2,52 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Settings"
+        Icon="Assets/calendar-app-icon.png"
         Width="560"
         Height="720"
         MinWidth="500"
         MinHeight="520"
         WindowStartupLocation="CenterOwner"
-        Background="{StaticResource OverlayBackgroundBrush}">
+        Background="{DynamicResource OverlayBackgroundBrush}">
     <Border Margin="14"
             Padding="22"
-            Background="{StaticResource OverlaySurfaceStrongBrush}"
-            BorderBrush="{StaticResource OverlayBorderBrush}"
+            Background="{DynamicResource OverlaySurfaceStrongBrush}"
+            BorderBrush="{DynamicResource OverlayBorderBrush}"
             BorderThickness="1"
             CornerRadius="22">
         <ScrollViewer VerticalScrollBarVisibility="Auto">
             <StackPanel>
                 <TextBlock Text="Settings"
-                           Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                           Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                            FontSize="30"
                            FontWeight="SemiBold" />
                 <TextBlock Text="Google account and calendar layer controls live here. v0.3 can connect a Desktop OAuth client, read Google Calendar layers/events, and falls back to mock data when no local client JSON/token is available."
                            TextWrapping="Wrap"
-                           Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                           Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                            Margin="0,8,0,22" />
 
                 <Border Padding="18"
-                        Background="{StaticResource OverlaySurfaceBrush}"
-                        BorderBrush="{StaticResource OverlayBorderBrush}"
+                        Background="{DynamicResource OverlaySurfaceBrush}"
+                        BorderBrush="{DynamicResource OverlayBorderBrush}"
                         BorderThickness="1"
                         CornerRadius="18"
                         Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="Google account settings"
-                                   Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                                   Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                    FontSize="18"
                                    FontWeight="SemiBold" />
                         <TextBlock Text="{Binding GoogleConnectionStatus}"
-                                   Foreground="{StaticResource OverlayAccentBrush}"
+                                   Foreground="{DynamicResource OverlayAccentBrush}"
                                    FontWeight="SemiBold"
                                    Margin="0,10,0,0" />
                         <TextBlock Text="Put the downloaded Google OAuth Desktop app JSON at this path, then click Connect. The browser consent flow stores tokens locally; no credential file is committed to the repo."
                                    TextWrapping="Wrap"
-                                   Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                                   Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                    Margin="0,6,0,8" />
                         <TextBlock Text="{Binding GoogleClientSecretPath}"
                                    TextWrapping="Wrap"
-                                   Foreground="{StaticResource OverlayTextMutedBrush}"
+                                   Foreground="{DynamicResource OverlayTextMutedBrush}"
                                    FontSize="11"
                                    Margin="0,0,0,12" />
                         <StackPanel Orientation="Horizontal">
@@ -71,19 +72,19 @@
                 </Border>
 
                 <Border Padding="18"
-                        Background="{StaticResource OverlaySurfaceBrush}"
-                        BorderBrush="{StaticResource OverlayBorderBrush}"
+                        Background="{DynamicResource OverlaySurfaceBrush}"
+                        BorderBrush="{DynamicResource OverlayBorderBrush}"
                         BorderThickness="1"
                         CornerRadius="18"
                         Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="Calendar layer settings"
-                                   Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                                   Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                    FontSize="18"
                                    FontWeight="SemiBold" />
                         <TextBlock Text="Google Calendar layers are loaded after connecting. Turn layers on/off here; v0.3 stores layer visibility locally and refreshes the month view."
                                    TextWrapping="Wrap"
-                                   Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                                   Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                    Margin="0,6,0,12" />
                         <ItemsControl ItemsSource="{Binding CalendarLayers}">
                             <ItemsControl.ItemTemplate>
@@ -97,9 +98,9 @@
                                                   IsChecked="{Binding IsVisible, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                                   Command="{Binding DataContext.ToggleLayerVisibilityCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                   CommandParameter="{Binding}"
-                                                  Foreground="{StaticResource OverlayTextPrimaryBrush}" />
+                                                  Foreground="{DynamicResource OverlayTextPrimaryBrush}" />
                                         <TextBlock Text="Primary"
-                                                   Foreground="{StaticResource OverlayAccentBrush}"
+                                                   Foreground="{DynamicResource OverlayAccentBrush}"
                                                    Margin="8,0,0,0">
                                             <TextBlock.Style>
                                                 <Style TargetType="TextBlock">
@@ -120,29 +121,29 @@
                 </Border>
 
                 <Border Padding="18"
-                        Background="{StaticResource OverlaySurfaceBrush}"
-                        BorderBrush="{StaticResource OverlayBorderBrush}"
+                        Background="{DynamicResource OverlaySurfaceBrush}"
+                        BorderBrush="{DynamicResource OverlayBorderBrush}"
                         BorderThickness="1"
                         CornerRadius="18"
                         Margin="0,0,0,16">
                     <StackPanel>
                         <TextBlock Text="Display settings"
-                                   Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                                   Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                    FontSize="18"
                                    FontWeight="SemiBold" />
                         <TextBlock Text="The event list still sorts by time; this only changes whether each item reads time-first or event-first."
                                    TextWrapping="Wrap"
-                                   Foreground="{StaticResource OverlayTextSecondaryBrush}"
+                                   Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                    Margin="0,6,0,12" />
 
                         <TextBlock Text="Event display format"
-                                   Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+                                   Foreground="{DynamicResource OverlayTextSecondaryBrush}" />
                         <ComboBox ItemsSource="{Binding EventDisplayModeOptions}"
                                   SelectedItem="{Binding SelectedEventDisplayMode, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                   Margin="0,4,0,14" />
 
                         <TextBlock Text="Theme"
-                                   Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+                                   Foreground="{DynamicResource OverlayTextSecondaryBrush}" />
                         <ComboBox ItemsSource="{Binding ThemeOptions}"
                                   SelectedItem="{Binding SelectedThemeName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                   Margin="0,4,0,14" />
@@ -153,10 +154,10 @@
                                 <ColumnDefinition Width="Auto" />
                             </Grid.ColumnDefinitions>
                             <TextBlock Text="Overlay opacity"
-                                       Foreground="{StaticResource OverlayTextSecondaryBrush}" />
+                                       Foreground="{DynamicResource OverlayTextSecondaryBrush}" />
                             <TextBlock Grid.Column="1"
                                        Text="{Binding OverlayOpacityPercentText}"
-                                       Foreground="{StaticResource OverlayAccentBrush}"
+                                       Foreground="{DynamicResource OverlayAccentBrush}"
                                        FontWeight="SemiBold" />
                         </Grid>
                         <Slider Minimum="0.35"
@@ -169,18 +170,18 @@
                 </Border>
 
                 <Border Padding="18"
-                        Background="{StaticResource OverlaySurfaceBrush}"
-                        BorderBrush="{StaticResource OverlayBorderBrush}"
+                        Background="{DynamicResource OverlaySurfaceBrush}"
+                        BorderBrush="{DynamicResource OverlayBorderBrush}"
                         BorderThickness="1"
                         CornerRadius="18">
                     <StackPanel>
                         <TextBlock Text="Overlay behavior"
-                                   Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                                   Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                    FontSize="18"
                                    FontWeight="SemiBold" />
                         <CheckBox Content="Always on top"
                                   IsChecked="{Binding IsTopmost, Mode=TwoWay}"
-                                  Foreground="{StaticResource OverlayTextPrimaryBrush}"
+                                  Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                   Margin="0,12,0,0" />
                     </StackPanel>
                 </Border>

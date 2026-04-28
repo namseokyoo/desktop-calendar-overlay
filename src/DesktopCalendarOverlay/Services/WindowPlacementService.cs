@@ -31,10 +31,9 @@ public sealed class WindowPlacementService(ISettingsStore settingsStore) : IWind
         window.Top = top;
         window.Width = width;
         window.Height = height;
-        window.Topmost = placement.IsTopmost;
     }
 
-    public void Save(Window window, bool isTopmost)
+    public void Save(Window window, bool isPositionLocked)
     {
         if (window.WindowState == WindowState.Minimized)
         {
@@ -52,7 +51,7 @@ public sealed class WindowPlacementService(ISettingsStore settingsStore) : IWind
 
         settingsStore.Write(
             SettingsKey,
-            new WindowPlacementState(bounds.Left, bounds.Top, bounds.Width, bounds.Height, isTopmost));
+            new WindowPlacementState(bounds.Left, bounds.Top, bounds.Width, bounds.Height, isPositionLocked));
     }
 
     private static bool IsFinitePositive(double value) => double.IsFinite(value) && value > 0;

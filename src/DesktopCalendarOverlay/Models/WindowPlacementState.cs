@@ -5,7 +5,7 @@ public sealed record WindowPlacementState(
     double Top,
     double Width,
     double Height,
-    bool IsTopmost)
+    bool IsPositionLocked)
 {
     public static WindowPlacementState Default => new(80, 80, 1180, 760, false);
 }

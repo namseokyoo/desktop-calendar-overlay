@@ -10,17 +10,17 @@ Included in MVP planning:
 
 - .NET 8 + WPF + MVVM desktop app.
 - WPF shell spike before full feature implementation.
-- Borderless/resizable overlay window with an always-on-top toggle.
+- Borderless/resizable overlay window with persisted position/size and a position-lock toggle.
 - Position and size persistence.
 - DPI scaling validation on Windows.
 - Google Calendar read support behind service interfaces.
 - Google Calendar create-only write path for user-initiated single-event creation.
 - Separate Settings window for Google authentication, connect/disconnect, and calendar layer selection.
 - v0.4 Google Calendar OAuth/read/create path with mock fallback when no local client JSON/token is available.
-- Today date highlight, display-format setting, opacity slider, and theme selector in Settings.
+- Today date-number badge, display-format setting, opacity slider, event-list text-size slider, layer color palette, and theme selector in Settings.
 - No edit/delete/repeat/attendee workflows in MVP.
 
-This build contains a WPF shell plus v0.4 Google Calendar read/create integration. It does **not** contain Google OAuth credentials, Google Cloud configuration, tokens, or user calendar exports.
+This build contains a WPF shell plus v0.4 Google Calendar read/create integration and v0.4.2 UI polish controls. It does **not** contain Google OAuth credentials, Google Cloud configuration, tokens, or user calendar exports.
 
 ## Prerequisites
 
@@ -44,7 +44,7 @@ dotnet run --project .\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj
 Manual checks for the first spike:
 
 1. Window opens without normal OS chrome and remains resizable.
-2. Always-on-top toggle changes `Topmost` behavior.
+2. Position lock prevents title-drag movement/resizing after placing the overlay.
 3. Moving/resizing the window, closing it, and reopening it restores placement.
 4. UI remains legible at 100%, 125%, and 150% Windows display scaling.
 5. Previous/next month buttons update the displayed mock calendar month.
@@ -56,7 +56,8 @@ Manual checks for the first spike:
 11. With a valid local OAuth client JSON, Connect opens the Google OAuth browser flow and then loads real calendar layers/events.
 12. Click `+ Add event` from the selected-day panel, create a single event, and verify it appears in Google Calendar after refresh.
 13. Settings can switch event display between `time · event` and `event · time` while preserving time sorting.
-14. Settings can adjust overlay opacity and switch between built-in themes.
+14. Settings can adjust overlay opacity, event-list text size, calendar layer colors, and switch between built-in themes.
+15. The app/window/taskbar icon uses the calendar `.ico` asset.
 
 See [`scripts/windows-validate.ps1`](scripts/windows-validate.ps1) for a documented validation helper and [`docs/SPIKE_PLAN.md`](docs/SPIKE_PLAN.md) for the spike plan.
 

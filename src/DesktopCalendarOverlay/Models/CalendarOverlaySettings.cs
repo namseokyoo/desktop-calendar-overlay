@@ -3,7 +3,9 @@ namespace DesktopCalendarOverlay.Models;
 public sealed record CalendarOverlaySettings(
     string EventDisplayMode = CalendarEventDisplayModes.TimeFirst,
     double OverlayOpacity = 1.0,
-    string ThemeName = CalendarThemeNames.AcrylicDark);
+    string ThemeName = CalendarThemeNames.AcrylicDark,
+    double EventListFontSize = 10.0,
+    bool IsPositionLocked = false);
 
 public static class CalendarEventDisplayModes
 {

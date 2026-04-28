@@ -7,7 +7,8 @@ public sealed record CalendarEvent(
     DateTimeOffset StartsAt,
     DateTimeOffset EndsAt,
     bool IsAllDay = false,
-    string? Location = null)
+    string? Location = null,
+    string LayerColorHex = "#7DD3FC")
 {
     public string TimeDisplay => IsAllDay
         ? "All day"

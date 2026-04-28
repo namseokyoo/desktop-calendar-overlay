@@ -9,5 +9,5 @@ public interface IWindowPlacementService
 
     void Apply(Window window, WindowPlacementState placement);
 
-    void Save(Window window, bool isTopmost);
+    void Save(Window window, bool isPositionLocked);
 }

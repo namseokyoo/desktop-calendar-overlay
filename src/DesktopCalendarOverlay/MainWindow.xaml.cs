@@ -24,6 +24,7 @@ public partial class MainWindow : Window
         _viewModel = new MainViewModel(calendarService, calendarService, settingsStore);
         _viewModel.OpenSettingsRequested += OnOpenSettingsRequested;
         _viewModel.OpenCreateEventRequested += OnOpenCreateEventRequested;
+        _viewModel.PositionLockChanged += OnPositionLockChanged;
         DataContext = _viewModel;
     }
 
@@ -34,7 +35,8 @@ public partial class MainWindow : Window
             AppDiagnostics.Info("Main window loaded; applying placement and loading calendar preview.");
             var placement = _windowPlacementService.Load();
             _windowPlacementService.Apply(this, placement);
-            await _viewModel.InitializeAsync(placement.IsTopmost);
+            await _viewModel.InitializeAsync(placement.IsPositionLocked);
+            ApplyPositionLock();
             AppDiagnostics.Info("Main window initialization completed.");
         }
         catch (Exception ex)
@@ -49,11 +51,11 @@ public partial class MainWindow : Window
     }
 
     private void OnClosing(object? sender, CancelEventArgs e) =>
-        _windowPlacementService.Save(this, _viewModel.IsTopmost);
+        _windowPlacementService.Save(this, _viewModel.IsPositionLocked);
 
     private void OnTitleMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (e.ButtonState != MouseButtonState.Pressed || IsInsideButton(e.OriginalSource as DependencyObject))
+        if (e.ButtonState != MouseButtonState.Pressed || IsInsideButton(e.OriginalSource as DependencyObject) || _viewModel.IsPositionLocked)
         {
             return;
         }
@@ -104,6 +106,17 @@ public partial class MainWindow : Window
         {
             await _viewModel.CreateCalendarEventAsync(createEventWindow.CreatedEvent);
         }
+    }
+
+    private void OnPositionLockChanged(object? sender, EventArgs e)
+    {
+        ApplyPositionLock();
+        _windowPlacementService.Save(this, _viewModel.IsPositionLocked);
+    }
+
+    private void ApplyPositionLock()
+    {
+        ResizeMode = _viewModel.IsPositionLocked ? ResizeMode.NoResize : ResizeMode.CanResize;
     }
 
     private void OnMinimizeClick(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;

@@ -1,17 +1,17 @@
 using System.ComponentModel;
-using System.Runtime.CompilerServices;
 
 namespace DesktopCalendarOverlay.Models;
 
 public sealed class CalendarLayer : INotifyPropertyChanged
 {
     private bool _isVisible;
+    private string _colorHex;
 
     public CalendarLayer(string id, string name, string colorHex, bool isVisible, bool isPrimary = false)
     {
         Id = id;
         Name = name;
-        ColorHex = string.IsNullOrWhiteSpace(colorHex) ? "#7DD3FC" : colorHex;
+        _colorHex = NormalizeColor(colorHex);
         _isVisible = isVisible;
         IsPrimary = isPrimary;
     }
@@ -22,7 +22,21 @@ public sealed class CalendarLayer : INotifyPropertyChanged
 
     public string Name { get; }
 
-    public string ColorHex { get; }
+    public string ColorHex
+    {
+        get => _colorHex;
+        set
+        {
+            var normalized = NormalizeColor(value);
+            if (StringComparer.OrdinalIgnoreCase.Equals(_colorHex, normalized))
+            {
+                return;
+            }
+
+            _colorHex = normalized;
+            OnPropertyChanged(nameof(ColorHex));
+        }
+    }
 
     public bool IsVisible
     {
@@ -35,9 +49,15 @@ public sealed class CalendarLayer : INotifyPropertyChanged
             }
 
             _isVisible = value;
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsVisible)));
+            OnPropertyChanged(nameof(IsVisible));
         }
     }
 
     public bool IsPrimary { get; }
+
+    private static string NormalizeColor(string? color) =>
+        string.IsNullOrWhiteSpace(color) ? "#7DD3FC" : color;
+
+    private void OnPropertyChanged(string propertyName) =>
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 }

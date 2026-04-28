@@ -11,6 +11,7 @@ namespace DesktopCalendarOverlay.ViewModels;
 public sealed class MainViewModel : INotifyPropertyChanged
 {
     private const string OverlaySettingsKey = "overlay-ui-settings";
+    private const string LayerColorOverridesKey = "calendar-layer-color-overrides";
 
     private readonly ICalendarService _calendarService;
     private readonly IGoogleCalendarIntegration? _googleIntegration;
@@ -18,7 +19,6 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private DateOnly _visibleMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
     private bool _isBusy;
     private bool _isDetailPanelExpanded = true;
-    private bool _isTopmost;
     private DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today);
     private string _statusText = "Using mock calendar data. Connect Google Calendar from Settings.";
     private CalendarOverlaySettings _overlaySettings = new();
@@ -41,12 +41,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
         PreviousMonthCommand = new RelayCommand(() => ChangeMonth(-1));
         NextMonthCommand = new RelayCommand(() => ChangeMonth(1));
         ToggleDetailPanelCommand = new RelayCommand(() => IsDetailPanelExpanded = !IsDetailPanelExpanded);
+        TogglePositionLockCommand = new RelayCommand(() => IsPositionLocked = !IsPositionLocked);
         OpenSettingsWindowCommand = new RelayCommand(() => OpenSettingsRequested?.Invoke(this, EventArgs.Empty));
         OpenCreateEventWindowCommand = new RelayCommand(() => OpenCreateEventRequested?.Invoke(this, EventArgs.Empty));
         ConnectGoogleCommand = new RelayCommand(() => _ = ConnectGoogleAsync());
         DisconnectGoogleCommand = new RelayCommand(() => _ = DisconnectGoogleAsync());
         RefreshCalendarCommand = new RelayCommand(() => _ = LoadCalendarAsync());
         ToggleLayerVisibilityCommand = new RelayCommand<CalendarLayer>(layer => _ = SaveLayerVisibilityAsync(layer));
+        UpdateLayerColorCommand = new RelayCommand<CalendarLayer>(layer => _ = SaveLayerColorAsync(layer));
 
         foreach (var header in BuildWeekdayHeaders())
         {
@@ -59,6 +61,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public event EventHandler? OpenSettingsRequested;
 
     public event EventHandler? OpenCreateEventRequested;
+
+    public event EventHandler? PositionLockChanged;
 
     public ObservableCollection<string> WeekdayHeaders { get; } = [];
 
@@ -76,6 +80,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public ICommand ToggleDetailPanelCommand { get; }
 
+    public ICommand TogglePositionLockCommand { get; }
+
     public ICommand OpenSettingsWindowCommand { get; }
 
     public ICommand OpenCreateEventWindowCommand { get; }
@@ -87,6 +93,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     public ICommand RefreshCalendarCommand { get; }
 
     public ICommand ToggleLayerVisibilityCommand { get; }
+
+    public ICommand UpdateLayerColorCommand { get; }
 
     public DateOnly SelectedDate
     {
@@ -136,11 +144,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public string DetailPanelToggleAccessibleText => IsDetailPanelExpanded ? "Collapse detail panel" : "Expand detail panel";
 
-    public bool IsTopmost
+    public bool IsPositionLocked
     {
-        get => _isTopmost;
-        set => SetField(ref _isTopmost, value);
+        get => _overlaySettings.IsPositionLocked;
+        set
+        {
+            if (_overlaySettings.IsPositionLocked == value)
+            {
+                return;
+            }
+
+            _overlaySettings = _overlaySettings with { IsPositionLocked = value };
+            SaveOverlaySettings();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(PositionLockText));
+            PositionLockChanged?.Invoke(this, EventArgs.Empty);
+        }
     }
+
+    public string PositionLockText => IsPositionLocked ? "Position locked" : "Lock position";
 
     public IReadOnlyList<string> EventDisplayModeOptions { get; } =
     [
@@ -154,6 +176,40 @@ public sealed class MainViewModel : INotifyPropertyChanged
         CalendarThemeNames.IvoryEditorial,
         CalendarThemeNames.MidnightBlue
     ];
+
+    public IReadOnlyList<string> LayerColorPalette { get; } =
+    [
+        "#7DD3FC",
+        "#38BDF8",
+        "#A78BFA",
+        "#F9A8D4",
+        "#FB7185",
+        "#F97316",
+        "#FACC15",
+        "#86EFAC",
+        "#34D399",
+        "#F8FAFC"
+    ];
+
+    public double EventListFontSize
+    {
+        get => _overlaySettings.EventListFontSize;
+        set
+        {
+            var normalized = Math.Clamp(Math.Round(value, 1), 9.0, 16.0);
+            if (Math.Abs(_overlaySettings.EventListFontSize - normalized) < 0.001)
+            {
+                return;
+            }
+
+            _overlaySettings = _overlaySettings with { EventListFontSize = normalized };
+            SaveOverlaySettings();
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(EventListFontSizeText));
+        }
+    }
+
+    public string EventListFontSizeText => $"{EventListFontSize:0.#} pt";
 
     public string SelectedEventDisplayMode
     {
@@ -249,9 +305,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public bool IsGoogleClientSecretAvailable => _googleIntegration?.IsClientSecretAvailable ?? false;
 
-    public async Task InitializeAsync(bool isTopmost)
+    public async Task InitializeAsync(bool isPositionLocked)
     {
-        IsTopmost = isTopmost;
+        IsPositionLocked = isPositionLocked;
         await LoadCalendarAsync();
     }
 
@@ -355,6 +411,22 @@ public sealed class MainViewModel : INotifyPropertyChanged
         }
     }
 
+    private async Task SaveLayerColorAsync(CalendarLayer layer)
+    {
+        try
+        {
+            var overrides = LoadLayerColorOverrides();
+            overrides[layer.Id] = layer.ColorHex;
+            _settingsStore.Write(LayerColorOverridesKey, overrides);
+            await LoadCalendarAsync();
+        }
+        catch (Exception ex)
+        {
+            AppDiagnostics.Error($"Saving calendar layer color failed for calendar '{layer.Id}'.", ex);
+            StatusText = $"Unable to save layer color: {ex.Message}";
+        }
+    }
+
     private async Task LoadCalendarAsync()
     {
         try
@@ -364,8 +436,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var calendarStart = StartOfWeek(monthStart);
             var calendarEnd = calendarStart.AddDays(42);
 
-            var layers = await _calendarService.GetLayersAsync();
-            var monthEvents = await _calendarService.GetEventsAsync(calendarStart, calendarEnd);
+            var layers = ApplyLayerColorOverrides(await _calendarService.GetLayersAsync());
+            var monthEvents = ApplyLayerColors(await _calendarService.GetEventsAsync(calendarStart, calendarEnd), layers);
 
             Replace(CalendarLayers, layers);
             Replace(Days, BuildDays(calendarStart, monthStart, SelectedDate, monthEvents));
@@ -425,13 +497,45 @@ public sealed class MainViewModel : INotifyPropertyChanged
             ? settings.ThemeName
             : CalendarThemeNames.AcrylicDark;
         var opacity = Math.Clamp(settings.OverlayOpacity, 0.35, 1.0);
+        var eventListFontSize = Math.Clamp(settings.EventListFontSize <= 0 ? 10.0 : settings.EventListFontSize, 9.0, 16.0);
         return settings with
         {
             EventDisplayMode = displayMode,
             ThemeName = themeName,
-            OverlayOpacity = opacity
+            OverlayOpacity = opacity,
+            EventListFontSize = eventListFontSize
         };
     }
+
+    private IReadOnlyList<CalendarLayer> ApplyLayerColorOverrides(IReadOnlyList<CalendarLayer> layers)
+    {
+        var overrides = LoadLayerColorOverrides();
+        foreach (var layer in layers)
+        {
+            if (overrides.TryGetValue(layer.Id, out var colorHex) && !string.IsNullOrWhiteSpace(colorHex))
+            {
+                layer.ColorHex = colorHex;
+            }
+        }
+
+        return layers;
+    }
+
+    private IReadOnlyList<CalendarEvent> ApplyLayerColors(IReadOnlyList<CalendarEvent> events, IReadOnlyList<CalendarLayer> layers)
+    {
+        var colorByLayerId = layers.ToDictionary(layer => layer.Id, layer => layer.ColorHex, StringComparer.Ordinal);
+        return events
+            .Select(calendarEvent => calendarEvent with
+            {
+                LayerColorHex = colorByLayerId.TryGetValue(calendarEvent.CalendarLayerId, out var colorHex)
+                    ? colorHex
+                    : calendarEvent.LayerColorHex
+            })
+            .ToList();
+    }
+
+    private Dictionary<string, string> LoadLayerColorOverrides() =>
+        _settingsStore.Read<Dictionary<string, string>>(LayerColorOverridesKey) ?? [];
 
     private static IReadOnlyList<CalendarDayViewModel> BuildDays(
         DateOnly calendarStart,

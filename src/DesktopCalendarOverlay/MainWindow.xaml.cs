@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using Forms = System.Windows.Forms;
 using DesktopCalendarOverlay.Services;
 using DesktopCalendarOverlay.ViewModels;
 
@@ -12,6 +13,8 @@ public partial class MainWindow : Window
 {
     private readonly IWindowPlacementService _windowPlacementService;
     private readonly MainViewModel _viewModel;
+    private readonly Forms.NotifyIcon _trayIcon;
+    private bool _isExitRequested;
 
     public MainWindow()
     {
@@ -28,6 +31,8 @@ public partial class MainWindow : Window
         _viewModel.DeleteEventRequested += OnDeleteEventRequested;
         _viewModel.PositionLockChanged += OnPositionLockChanged;
         DataContext = _viewModel;
+
+        _trayIcon = CreateTrayIcon();
     }
 
     private async void OnLoaded(object sender, RoutedEventArgs e)
@@ -52,8 +57,16 @@ public partial class MainWindow : Window
         }
     }
 
-    private void OnClosing(object? sender, CancelEventArgs e) =>
+    private void OnClosing(object? sender, CancelEventArgs e)
+    {
         _windowPlacementService.Save(this, _viewModel.IsPositionLocked);
+        if (!_isExitRequested && _trayIcon.Visible)
+        {
+            e.Cancel = true;
+            Hide();
+            _trayIcon.ShowBalloonTip(1500, "Desktop Calendar Overlay", "Overlay hidden. Use the tray icon to show it again or exit.", Forms.ToolTipIcon.Info);
+        }
+    }
 
     private void OnTitleMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
@@ -86,8 +99,11 @@ public partial class MainWindow : Window
         return false;
     }
 
-    private void OnOpenSettingsRequested(object? sender, EventArgs e)
+    private void OnOpenSettingsRequested(object? sender, EventArgs e) => ShowSettingsWindow();
+
+    private void ShowSettingsWindow()
     {
+        ShowOverlay();
         var settingsWindow = new SettingsWindow
         {
             Owner = this,
@@ -150,4 +166,61 @@ public partial class MainWindow : Window
     private void OnMinimizeClick(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
+
+    private Forms.NotifyIcon CreateTrayIcon()
+    {
+        var showHideItem = new Forms.ToolStripMenuItem("Show/Hide", null, (_, _) => ToggleOverlayVisibility());
+        var settingsItem = new Forms.ToolStripMenuItem("Settings", null, (_, _) => ShowSettingsWindow());
+        var refreshItem = new Forms.ToolStripMenuItem("Refresh", null, (_, _) =>
+        {
+            ShowOverlay();
+            if (_viewModel.RefreshCalendarCommand.CanExecute(null))
+            {
+                _viewModel.RefreshCalendarCommand.Execute(null);
+            }
+        });
+        var exitItem = new Forms.ToolStripMenuItem("Exit", null, (_, _) => ExitApplication());
+        var menu = new Forms.ContextMenuStrip();
+        menu.Items.AddRange([showHideItem, settingsItem, refreshItem, new Forms.ToolStripSeparator(), exitItem]);
+
+        var icon = new Forms.NotifyIcon
+        {
+            Icon = System.Drawing.Icon.ExtractAssociatedIcon(Environment.ProcessPath ?? Forms.Application.ExecutablePath) ?? System.Drawing.SystemIcons.Application,
+            Text = "Desktop Calendar Overlay",
+            ContextMenuStrip = menu,
+            Visible = true
+        };
+        icon.DoubleClick += (_, _) => ToggleOverlayVisibility();
+        return icon;
+    }
+
+    private void ToggleOverlayVisibility()
+    {
+        if (IsVisible && WindowState != WindowState.Minimized)
+        {
+            Hide();
+            return;
+        }
+
+        ShowOverlay();
+    }
+
+    private void ShowOverlay()
+    {
+        Show();
+        if (WindowState == WindowState.Minimized)
+        {
+            WindowState = WindowState.Normal;
+        }
+
+        Activate();
+    }
+
+    private void ExitApplication()
+    {
+        _isExitRequested = true;
+        _trayIcon.Visible = false;
+        _trayIcon.Dispose();
+        Close();
+    }
 }

@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Globalization;
+using System.IO;
+using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using DesktopCalendarOverlay.Models;
@@ -12,6 +14,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 {
     private const string OverlaySettingsKey = "overlay-ui-settings";
     private const string LayerColorOverridesKey = "calendar-layer-color-overrides";
+    private const string LayerVisibilityOverridesKey = "google-calendar-layer-visibility";
 
     private readonly ICalendarService _calendarService;
     private readonly IGoogleCalendarIntegration? _googleIntegration;
@@ -22,6 +25,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today);
     private string _statusText = "Using mock calendar data. Connect Google Calendar from Settings.";
     private CalendarOverlaySettings _overlaySettings = new();
+    private readonly StartupRegistrationService _startupRegistrationService = new();
 
     public MainViewModel(
         ICalendarService calendarService,
@@ -128,6 +132,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public string MonthTitle => _visibleMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
 
+    public string VersionLabel => "v0.6.0-polish-release-ready";
+
     public bool IsBusy
     {
         get => _isBusy;
@@ -173,6 +179,47 @@ public sealed class MainViewModel : INotifyPropertyChanged
     }
 
     public string PositionLockText => IsPositionLocked ? "Position locked" : "Lock position";
+
+    public bool StartWithWindows
+    {
+        get => _overlaySettings.StartWithWindows && _startupRegistrationService.IsEnabled;
+        set
+        {
+            if (!_startupRegistrationService.IsSupported)
+            {
+                StatusText = "Windows startup can only be changed when running on Windows.";
+                OnPropertyChanged();
+                return;
+            }
+
+            if (_overlaySettings.StartWithWindows == value && _startupRegistrationService.IsEnabled == value)
+            {
+                return;
+            }
+
+            try
+            {
+                _startupRegistrationService.IsEnabled = value;
+                _overlaySettings = _overlaySettings with { StartWithWindows = value };
+                SaveOverlaySettings();
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(StartWithWindowsStatus));
+                StatusText = value
+                    ? "Windows startup enabled for Desktop Calendar Overlay."
+                    : "Windows startup disabled for Desktop Calendar Overlay.";
+            }
+            catch (Exception ex)
+            {
+                StatusText = FriendlyErrorMessage("Unable to update Windows startup", ex);
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(StartWithWindowsStatus));
+            }
+        }
+    }
+
+    public string StartWithWindowsStatus => _startupRegistrationService.IsSupported
+        ? "Launch Desktop Calendar Overlay after Windows sign-in."
+        : "Windows startup is available only when running on Windows.";
 
     public IReadOnlyList<string> EventDisplayModeOptions { get; } =
     [
@@ -334,7 +381,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             AppDiagnostics.Error("Calendar event creation failed.", ex);
-            StatusText = $"Unable to create event: {ex.Message}";
+            StatusText = FriendlyErrorMessage("Unable to create event", ex);
         }
         finally
         {
@@ -355,7 +402,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             AppDiagnostics.Error("Calendar event update failed.", ex);
-            StatusText = $"Unable to update event: {ex.Message}";
+            StatusText = FriendlyErrorMessage("Unable to update event", ex);
         }
         finally
         {
@@ -375,7 +422,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             AppDiagnostics.Error("Calendar event delete failed.", ex);
-            StatusText = $"Unable to delete event: {ex.Message}";
+            StatusText = FriendlyErrorMessage("Unable to delete event", ex);
         }
         finally
         {
@@ -409,7 +456,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             AppDiagnostics.Error("Google Calendar connect failed.", ex);
-            StatusText = $"Google connect failed: {ex.Message}";
+            StatusText = FriendlyErrorMessage("Google connect failed", ex);
             NotifyGoogleStateChanged();
         }
         finally
@@ -435,7 +482,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             AppDiagnostics.Error("Google Calendar disconnect failed.", ex);
-            StatusText = $"Google disconnect failed: {ex.Message}";
+            StatusText = FriendlyErrorMessage("Google disconnect failed", ex);
         }
         finally
         {
@@ -445,20 +492,26 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private async Task SaveLayerVisibilityAsync(CalendarLayer layer)
     {
-        if (_googleIntegration is null || !_googleIntegration.IsUsingGoogle)
-        {
-            return;
-        }
-
         try
         {
-            await _googleIntegration.SetLayerVisibilityAsync(layer.Id, layer.IsVisible);
+            var overrides = LoadLayerVisibilityOverrides();
+            overrides[layer.Id] = layer.IsVisible;
+            _settingsStore.Write(LayerVisibilityOverridesKey, overrides);
+
+            if (_googleIntegration is not null)
+            {
+                await _googleIntegration.SetLayerVisibilityAsync(layer.Id, layer.IsVisible);
+            }
+
             await LoadCalendarAsync();
+            StatusText = layer.IsVisible
+                ? $"Layer shown: {layer.Name}"
+                : $"Layer hidden: {layer.Name}";
         }
         catch (Exception ex)
         {
-            AppDiagnostics.Error($"Saving Google layer visibility failed for calendar '{layer.Id}'.", ex);
-            StatusText = $"Unable to save layer visibility: {ex.Message}";
+            AppDiagnostics.Error($"Saving layer visibility failed for calendar '{layer.Id}'.", ex);
+            StatusText = FriendlyErrorMessage("Unable to save layer visibility", ex);
         }
     }
 
@@ -475,7 +528,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             AppDiagnostics.Error($"Saving calendar layer color failed for calendar '{layer.Id}'.", ex);
-            StatusText = $"Unable to save layer color: {ex.Message}";
+            StatusText = FriendlyErrorMessage("Unable to save layer color", ex);
         }
 
         return Task.CompletedTask;
@@ -490,8 +543,10 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var calendarStart = StartOfWeek(monthStart);
             var calendarEnd = calendarStart.AddDays(42);
 
-            var layers = ApplyLayerColorOverrides(await _calendarService.GetLayersAsync());
-            var monthEvents = ApplyLayerColors(await _calendarService.GetEventsAsync(calendarStart, calendarEnd), layers);
+            var layers = ApplyLayerVisibilityOverrides(ApplyLayerColorOverrides(await _calendarService.GetLayersAsync()));
+            var monthEvents = ApplyLayerColors(await _calendarService.GetEventsAsync(calendarStart, calendarEnd), layers)
+                .Where(calendarEvent => layers.Any(layer => layer.Id == calendarEvent.CalendarLayerId && layer.IsVisible))
+                .ToList();
 
             Replace(CalendarLayers, layers);
             Replace(Days, BuildDays(calendarStart, monthStart, SelectedDate, monthEvents));
@@ -512,7 +567,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             AppDiagnostics.Error("Calendar preview load failed.", ex);
-            StatusText = $"Unable to load calendar preview: {ex.Message}";
+            StatusText = FriendlyErrorMessage("Unable to refresh calendar", ex);
         }
         finally
         {
@@ -538,7 +593,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         catch (Exception ex)
         {
             AppDiagnostics.Error("Unable to save overlay UI settings.", ex);
-            StatusText = $"Unable to save overlay settings: {ex.Message}";
+            StatusText = FriendlyErrorMessage("Unable to save overlay settings", ex);
         }
     }
 
@@ -584,6 +639,20 @@ public sealed class MainViewModel : INotifyPropertyChanged
         };
     }
 
+    private IReadOnlyList<CalendarLayer> ApplyLayerVisibilityOverrides(IReadOnlyList<CalendarLayer> layers)
+    {
+        var overrides = LoadLayerVisibilityOverrides();
+        foreach (var layer in layers)
+        {
+            if (overrides.TryGetValue(layer.Id, out var isVisible))
+            {
+                layer.IsVisible = isVisible;
+            }
+        }
+
+        return layers;
+    }
+
     private IReadOnlyList<CalendarLayer> ApplyLayerColorOverrides(IReadOnlyList<CalendarLayer> layers)
     {
         var overrides = LoadLayerColorOverrides();
@@ -613,6 +682,25 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private Dictionary<string, string> LoadLayerColorOverrides() =>
         _settingsStore.Read<Dictionary<string, string>>(LayerColorOverridesKey) ?? [];
+
+    private Dictionary<string, bool> LoadLayerVisibilityOverrides() =>
+        _settingsStore.Read<Dictionary<string, bool>>(LayerVisibilityOverridesKey) ?? [];
+
+    private static string FriendlyErrorMessage(string action, Exception exception)
+    {
+        var reason = exception switch
+        {
+            FileNotFoundException => "required local file is missing",
+            UnauthorizedAccessException => "permission was denied",
+            HttpRequestException => "network request failed",
+            InvalidOperationException => exception.Message,
+            _ when exception.GetType().Name.Contains("Token", StringComparison.OrdinalIgnoreCase) => "Google authorization token could not be used",
+            _ when exception.GetType().Name.Contains("Google", StringComparison.OrdinalIgnoreCase) => "Google Calendar request failed",
+            _ => exception.Message
+        };
+
+        return $"{action}: {reason}. See diagnostic log: {AppDiagnostics.LogPath}";
+    }
 
     private static IReadOnlyList<CalendarDayViewModel> BuildDays(
         DateOnly calendarStart,

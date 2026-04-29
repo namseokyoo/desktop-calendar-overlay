@@ -13,4 +13,8 @@ public sealed record CalendarEvent(
     public string TimeDisplay => IsAllDay
         ? "All day"
         : $"{StartsAt:t}–{EndsAt:t}";
+
+    public bool IsUpcoming => !IsAllDay && StartsAt >= DateTimeOffset.Now && StartsAt <= DateTimeOffset.Now.AddHours(24);
+
+    public bool HasLocation => !string.IsNullOrWhiteSpace(Location);
 }

@@ -5,7 +5,8 @@ public sealed record CalendarOverlaySettings(
     double OverlayOpacity = 1.0,
     string ThemeName = CalendarThemeNames.AcrylicDark,
     double EventListFontSize = 10.0,
-    bool IsPositionLocked = false);
+    bool IsPositionLocked = false,
+    bool StartWithWindows = false);
 
 public static class CalendarEventDisplayModes
 {

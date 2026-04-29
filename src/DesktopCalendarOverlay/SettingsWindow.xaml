@@ -21,7 +21,7 @@
                            Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                            FontSize="30"
                            FontWeight="SemiBold" />
-                <TextBlock Text="Google account and calendar layer controls live here. v0.3 can connect a Desktop OAuth client, read Google Calendar layers/events, and falls back to mock data when no local client JSON/token is available."
+                <TextBlock Text="Google account, calendar layer, display, and startup controls live here. v0.6 can connect a Desktop OAuth client, read Google Calendar layers/events, and falls back to mock data when no local client JSON/token is available."
                            TextWrapping="Wrap"
                            Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                            Margin="0,8,0,22" />
@@ -82,7 +82,7 @@
                                    Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                    FontSize="18"
                                    FontWeight="SemiBold" />
-                        <TextBlock Text="Google Calendar layers are loaded after connecting. Turn layers on/off here; v0.3 stores layer visibility locally and refreshes the month view."
+                        <TextBlock Text="Google Calendar layers are loaded after connecting. Turn layers on/off here; v0.6 stores layer visibility locally and refreshes the month view immediately."
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                    Margin="0,6,0,12" />
@@ -211,6 +211,15 @@
                                   IsChecked="{Binding IsPositionLocked, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                   Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                   Margin="0,12,0,0" />
+                        <CheckBox Content="Start after Windows sign-in"
+                                  IsChecked="{Binding StartWithWindows, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                  Foreground="{DynamicResource OverlayTextPrimaryBrush}"
+                                  Margin="0,12,0,0" />
+                        <TextBlock Text="{Binding StartWithWindowsStatus}"
+                                   TextWrapping="Wrap"
+                                   Foreground="{DynamicResource OverlayTextMutedBrush}"
+                                   FontSize="11"
+                                   Margin="0,4,0,0" />
                     </StackPanel>
                 </Border>
             </StackPanel>

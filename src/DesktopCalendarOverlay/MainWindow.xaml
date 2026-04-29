@@ -97,9 +97,15 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="1">
-                    <TextBlock Text="Desktop Calendar Overlay"
-                               Foreground="{DynamicResource OverlayTextSecondaryBrush}"
-                               FontSize="13" />
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="Desktop Calendar Overlay"
+                                   Foreground="{DynamicResource OverlayTextSecondaryBrush}"
+                                   FontSize="13" />
+                        <TextBlock Text="{Binding VersionLabel}"
+                                   Foreground="{DynamicResource OverlayTextMutedBrush}"
+                                   FontSize="11"
+                                   Margin="8,2,0,0" />
+                    </StackPanel>
                     <TextBlock Text="{Binding MonthTitle}"
                                Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                FontSize="38"
@@ -216,7 +222,10 @@
                                                       Margin="0,4,0,0">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border Background="{DynamicResource OverlayAccentSoftBrush}"
+                                                    <Border x:Name="PreviewEventChip"
+                                                            Background="{DynamicResource OverlayAccentSoftBrush}"
+                                                            BorderBrush="Transparent"
+                                                            BorderThickness="1"
                                                             CornerRadius="6"
                                                             Padding="0"
                                                             Margin="0,0,0,2">
@@ -231,7 +240,8 @@
                                                             <TextBlock x:Name="TimeFirstPreviewText"
                                                                        FontSize="{Binding DataContext.EventListFontSize, RelativeSource={RelativeSource AncestorType=Window}}"
                                                                        Foreground="{DynamicResource OverlayTextPrimaryBrush}"
-                                                                       TextTrimming="CharacterEllipsis">
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       ToolTip="{Binding Title}">
                                                                 <Run Text="{Binding TimeDisplay, Mode=OneWay}" />
                                                                 <Run Text=" " />
                                                                 <Run Text="{Binding Title, Mode=OneWay}" />
@@ -240,7 +250,8 @@
                                                                        Visibility="Collapsed"
                                                                        FontSize="{Binding DataContext.EventListFontSize, RelativeSource={RelativeSource AncestorType=Window}}"
                                                                        Foreground="{DynamicResource OverlayTextPrimaryBrush}"
-                                                                       TextTrimming="CharacterEllipsis">
+                                                                       TextTrimming="CharacterEllipsis"
+                                                                       ToolTip="{Binding Title}">
                                                                 <Run Text="{Binding Title, Mode=OneWay}" />
                                                                 <Run Text=" · " />
                                                                 <Run Text="{Binding TimeDisplay, Mode=OneWay}" />
@@ -252,6 +263,9 @@
                                                     <DataTrigger Binding="{Binding DataContext.IsEventFirstDisplay, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
                                                         <Setter TargetName="TimeFirstPreviewText" Property="Visibility" Value="Collapsed" />
                                                         <Setter TargetName="EventFirstPreviewText" Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                    <DataTrigger Binding="{Binding IsUpcoming}" Value="True">
+                                                        <Setter TargetName="PreviewEventChip" Property="BorderBrush" Value="{DynamicResource OverlayAccentBrush}" />
                                                     </DataTrigger>
                                                 </DataTemplate.Triggers>
                                                 </DataTemplate>
@@ -353,7 +367,10 @@
                             <ItemsControl ItemsSource="{Binding SelectedDayEvents}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="{DynamicResource OverlaySurfaceBrush}"
+                                        <Border x:Name="EventDetailCard"
+                                                Background="{DynamicResource OverlaySurfaceBrush}"
+                                                BorderBrush="{DynamicResource OverlayBorderBrush}"
+                                                BorderThickness="1"
                                                 CornerRadius="14"
                                                 Padding="0"
                                                 Margin="0,0,0,10">
@@ -376,6 +393,9 @@
                                                            FontSize="{Binding DataContext.EventListFontSize, RelativeSource={RelativeSource AncestorType=Window}}"
                                                            FontWeight="SemiBold"
                                                            TextWrapping="Wrap"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           MaxHeight="56"
+                                                           ToolTip="{Binding Title}"
                                                            Margin="0,2,0,0" />
                                                 <TextBlock x:Name="EventFirstDetailTitle"
                                                            Visibility="Collapsed"
@@ -383,7 +403,10 @@
                                                            Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                                            FontSize="{Binding DataContext.EventListFontSize, RelativeSource={RelativeSource AncestorType=Window}}"
                                                            FontWeight="SemiBold"
-                                                           TextWrapping="Wrap" />
+                                                           TextWrapping="Wrap"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           MaxHeight="56"
+                                                           ToolTip="{Binding Title}" />
                                                 <TextBlock x:Name="EventFirstDetailTime"
                                                            Visibility="Collapsed"
                                                            Text="{Binding TimeDisplay, Mode=OneWay}"
@@ -393,7 +416,12 @@
                                                            Margin="0,2,0,0" />
                                                 <TextBlock Text="{Binding Location}"
                                                            Foreground="{DynamicResource OverlayTextMutedBrush}"
-                                                           FontSize="12" />
+                                                           FontSize="12"
+                                                           TextWrapping="Wrap"
+                                                           TextTrimming="CharacterEllipsis"
+                                                           MaxHeight="42"
+                                                           ToolTip="{Binding Location}"
+                                                           Visibility="{Binding HasLocation, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                                 <StackPanel Orientation="Horizontal"
                                                             HorizontalAlignment="Right"
                                                             Margin="0,8,0,0">
@@ -418,6 +446,10 @@
                                                 <Setter TargetName="TimeFirstDetailTitle" Property="Visibility" Value="Collapsed" />
                                                 <Setter TargetName="EventFirstDetailTitle" Property="Visibility" Value="Visible" />
                                                 <Setter TargetName="EventFirstDetailTime" Property="Visibility" Value="Visible" />
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding IsUpcoming}" Value="True">
+                                                <Setter TargetName="EventDetailCard" Property="BorderBrush" Value="{DynamicResource OverlayAccentBrush}" />
+                                                <Setter TargetName="EventDetailCard" Property="Background" Value="{DynamicResource OverlayAccentSoftBrush}" />
                                             </DataTrigger>
                                         </DataTemplate.Triggers>
                                     </DataTemplate>

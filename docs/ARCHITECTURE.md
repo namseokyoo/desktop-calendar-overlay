@@ -2,7 +2,7 @@
 
 ## Goal
 
-The MVP uses a small .NET 8 WPF + MVVM architecture that keeps Windows shell behavior, calendar data, settings, and future Google integration behind interfaces. The first milestone is a WPF shell spike, not a complete Google Calendar app.
+The MVP uses a small .NET 8 WPF + MVVM architecture that keeps Windows shell behavior, calendar data, settings, tray/startup behavior, and Google integration behind interfaces. The first milestone is a WPF shell spike, not a complete Google Calendar app.
 
 ## Layers
 
@@ -32,17 +32,17 @@ Models
 
 ## ViewModel layer
 
-- `MainViewModel` exposes UI state: current month label, selected date, mock calendar layers, events, and always-on-top state.
+- `MainViewModel` exposes UI state: current month label, selected date, calendar layers, events, selected date/detail state, Google connection status, persisted display settings, and startup setting.
 - It uses `INotifyPropertyChanged` directly to avoid introducing dependencies during the spike.
 - Later commands can be added for date navigation, settings, and event creation.
 
 ## Service interfaces
 
-- `ICalendarService` abstracts calendar reads and MVP create-only event writes.
+- `ICalendarService` abstracts calendar reads and narrow user-initiated event create/update/delete writes.
 - `ISettingsStore` abstracts local app settings persistence.
 - `IWindowPlacementService` abstracts saving/restoring WPF window placement.
 
-The Google Calendar implementation should be added behind `ICalendarService` only after the shell spike is validated on Windows. The WPF views and view models should not directly depend on Google SDK types.
+The Google Calendar implementation stays behind `ICalendarService`/`IGoogleCalendarIntegration`. The WPF views and view models should not directly depend on Google SDK types.
 
 ## Current implementations
 
@@ -55,12 +55,11 @@ The Google Calendar implementation should be added behind `ICalendarService` onl
 Included:
 
 - Google Calendar read support.
-- User-initiated single-event creation.
+- User-initiated single-event create/update/delete.
 - Settings-owned authentication and calendar layer selection.
 
 Excluded until post-MVP:
 
-- Event edit/delete.
 - Repeat event authoring.
 - Attendee invitation workflows.
 - Outlook/Apple/CalDAV integrations.

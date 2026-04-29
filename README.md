@@ -16,11 +16,11 @@ Included in MVP planning:
 - Google Calendar read support behind service interfaces.
 - Google Calendar create/update/delete path for user-initiated single-event CRUD.
 - Separate Settings window for Google authentication, connect/disconnect, and calendar layer selection.
-- v0.4 Google Calendar OAuth/read/create path with mock fallback when no local client JSON/token is available.
+- v0.6 Google Calendar OAuth/read/create/update/delete path with mock fallback when no local client JSON/token is available.
 - Today date-number badge, display-format setting, opacity slider, event-list text-size slider, layer color palette, and theme selector in Settings.
 - No repeat/attendee workflows in MVP.
 
-This build contains a WPF shell plus v0.5 Google Calendar read/create/update/delete integration and polished layer color controls. It does **not** contain Google OAuth credentials, Google Cloud configuration, tokens, or user calendar exports.
+This build is `0.6.0-polish-release-ready`: a WPF shell plus Google Calendar read/create/update/delete integration, stable error reporting, persisted display/layer settings, tray controls, Windows startup option, and release-readiness docs. It does **not** contain Google OAuth credentials, Google Cloud configuration, tokens, or user calendar exports.
 
 ## Prerequisites
 
@@ -32,6 +32,34 @@ Build and visual validation must run on Windows:
 
 > Current host limitation: this repository was bootstrapped from macOS where only .NET 7 is installed. WPF targets `net8.0-windows` and cannot be built or visually validated on this host. Run the validation commands below on Windows with the .NET 8 SDK.
 
+## Run, logs, and release package
+
+Developer run on Windows:
+
+```powershell
+dotnet run --project .\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj
+```
+
+Diagnostics are written to:
+
+```text
+%LOCALAPPDATA%\DesktopCalendarOverlay\logs\startup.log
+```
+
+Release packaging currently uses ZIP artifacts, not an installer/MSIX. The Windows release workflow publishes:
+
+- `desktop-calendar-overlay-win-x64.zip` — self-contained Windows x64 single-file publish output.
+- `desktop-calendar-overlay-win-x64-portable.zip` — self-contained Windows x64 portable folder publish output.
+
+Extract a ZIP on Windows and run `DesktopCalendarOverlay.exe`. OAuth credentials/tokens are not bundled; real Google Calendar sync still requires the local Desktop OAuth client JSON described below.
+
+## Known v0.6.0 limitations
+
+- WPF visual/runtime validation is Windows-only.
+- Real Google sync requires a local Google OAuth Desktop app JSON and permitted test user/consent setup.
+- Repeat events and attendee/invitation workflows are intentionally out of MVP scope.
+- Packaging is ZIP-based for now; no installer, auto-update, or MSIX package is included.
+
 ## Windows validation
 
 From a Windows terminal at the repository root:
@@ -41,7 +69,7 @@ From a Windows terminal at the repository root:
 dotnet run --project .\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj
 ```
 
-Manual checks for the first spike:
+Manual release checks are tracked in [`docs/QA_CHECKLIST_v0.6.0.md`](docs/QA_CHECKLIST_v0.6.0.md). Summary checks:
 
 1. Window opens without normal OS chrome and remains resizable.
 2. Position lock prevents title-drag movement/resizing after placing the overlay.
@@ -57,8 +85,9 @@ Manual checks for the first spike:
 12. Click `+ Add event` from the selected-day panel, create a single event, and verify it appears in Google Calendar after refresh.
 13. Use `Edit` and `Delete` from the selected-day detail panel and verify the Google Calendar event updates/deletes after refresh.
 14. Settings can switch event display between `time · event` and `event · time` while preserving time sorting.
-15. Settings can adjust overlay opacity, event-list text size, calendar layer colors via the current-color circle/native palette, and switch between built-in themes.
-16. The app/window/taskbar icon uses the calendar `.ico` asset.
+15. Settings can adjust overlay opacity, event-list text size, calendar layer visibility/colors via the current-color circle/native palette, and switch between built-in themes; changes persist after restart.
+16. Tray menu exposes Show/Hide, Settings, Refresh, and Exit; Windows startup can be enabled/disabled from Settings.
+17. The app/window/taskbar icon uses the calendar `.ico` asset.
 
 See [`scripts/windows-validate.ps1`](scripts/windows-validate.ps1) for a documented validation helper and [`docs/SPIKE_PLAN.md`](docs/SPIKE_PLAN.md) for the spike plan.
 

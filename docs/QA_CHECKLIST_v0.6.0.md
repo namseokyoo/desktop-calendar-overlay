@@ -1,8 +1,8 @@
-# Desktop Calendar Overlay v0.6.0 Manual QA Checklist
+# Desktop Calendar Overlay v0.6.0/v0.6.1 Manual QA Checklist
 
-Version under test: `0.6.0-polish-release-ready`
+Version under test: `0.6.1-performance-cache`
 
-Use this as the canonical release-readiness checklist for v0.6.0. Do not paste OAuth client JSON, tokens, authorization codes, refresh tokens, or private calendar payloads into reports.
+Use this as the canonical release-readiness checklist for v0.6.0 and the v0.6.1 performance-cache patch. Do not paste OAuth client JSON, tokens, authorization codes, refresh tokens, or private calendar payloads into reports.
 
 ## 1. Build and artifact preflight
 
@@ -32,7 +32,9 @@ Use this as the canonical release-readiness checklist for v0.6.0. Do not paste O
 
 - [ ] Today badge/date number is visually distinct.
 - [ ] Upcoming events in the next 24 hours are emphasized in preview/detail cards.
-- [ ] Previous/next month updates the calendar grid without losing stability.
+- [ ] Previous/next month updates the calendar grid without losing stability and performs a real calendar refresh.
+- [ ] Selecting several dates in the already-loaded month updates the detail panel immediately from cache; status/log timing should report cached selection, with no visible Google refresh spinner/network delay.
+- [ ] Initial startup/manual refresh timing remains distinguishable from cached date-selection timing in status text or diagnostics.
 - [ ] Long event titles truncate/wrap without breaking day cells or detail cards.
 - [ ] Long locations wrap/truncate in the detail card and remain readable via tooltip.
 - [ ] Detail panel expands/collapses without losing selected-day state.
@@ -54,6 +56,7 @@ Use this as the canonical release-readiness checklist for v0.6.0. Do not paste O
 - [ ] After consent, real calendar layers and visible events load.
 - [ ] Network/token/list failures show a user-visible status error and write diagnostics instead of crashing.
 - [ ] Refresh after reconnect/token change updates calendar layers/events.
+- [ ] Month navigation, manual refresh, connect/disconnect, layer visibility changes, and add/edit/delete flows still refresh Google Calendar data as appropriate.
 - [ ] Create a timed event and verify it appears in Google Calendar after refresh.
 - [ ] Create an all-day event and verify it appears in Google Calendar after refresh.
 - [ ] Edit title, time/date, and location; verify Google Calendar reflects the change after refresh.
@@ -64,4 +67,4 @@ Use this as the canonical release-readiness checklist for v0.6.0. Do not paste O
 
 - [ ] Diagnostics are written to `%LOCALAPPDATA%\DesktopCalendarOverlay\logs\startup.log`.
 - [ ] Logs contain no OAuth secrets, tokens, authorization headers, or raw private calendar payloads.
-- [ ] Known v0.6.0 limitations are accepted: Windows-only WPF validation, local OAuth Desktop client setup required for real sync, no repeat/attendee workflows, and no installer/MSIX yet.
+- [ ] Known v0.6.x limitations are accepted: Windows-only WPF validation, local OAuth Desktop client setup required for real sync, no repeat/attendee workflows, and no installer/MSIX yet.

@@ -20,7 +20,7 @@ Included in MVP planning:
 - Today date-number badge, display-format setting, opacity slider, event-list text-size slider, layer color palette, and theme selector in Settings.
 - No repeat/attendee workflows in MVP.
 
-This build is `0.6.0-polish-release-ready`: a WPF shell plus Google Calendar read/create/update/delete integration, stable error reporting, persisted display/layer settings, tray controls, Windows startup option, and release-readiness docs. It does **not** contain Google OAuth credentials, Google Cloud configuration, tokens, or user calendar exports.
+This build is `0.6.1-performance-cache`: a WPF shell plus Google Calendar read/create/update/delete integration, stable error reporting, persisted display/layer settings, tray controls, Windows startup option, and release-readiness docs. It does **not** contain Google OAuth credentials, Google Cloud configuration, tokens, or user calendar exports.
 
 ## Prerequisites
 
@@ -53,7 +53,7 @@ Release packaging currently uses ZIP artifacts, not an installer/MSIX. The Windo
 
 Extract a ZIP on Windows and run `DesktopCalendarOverlay.exe`. OAuth credentials/tokens are not bundled; real Google Calendar sync still requires the local Desktop OAuth client JSON described below.
 
-## Known v0.6.0 limitations
+## Known v0.6.x limitations
 
 - WPF visual/runtime validation is Windows-only.
 - Real Google sync requires a local Google OAuth Desktop app JSON and permitted test user/consent setup.
@@ -69,16 +69,16 @@ From a Windows terminal at the repository root:
 dotnet run --project .\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj
 ```
 
-Manual release checks are tracked in [`docs/QA_CHECKLIST_v0.6.0.md`](docs/QA_CHECKLIST_v0.6.0.md). Summary checks:
+Manual release checks are tracked in [`docs/QA_CHECKLIST_v0.6.0.md`](docs/QA_CHECKLIST_v0.6.0.md), with v0.6.1 performance-cache points included. Summary checks:
 
 1. Window opens without normal OS chrome and remains resizable.
 2. Position lock prevents title-drag movement/resizing after placing the overlay.
 3. Moving/resizing the window, closing it, and reopening it restores placement.
 4. UI remains legible at 100%, 125%, and 150% Windows display scaling.
-5. Previous/next month buttons update the displayed mock calendar month.
+5. Previous/next month buttons update the displayed calendar month and perform a real refresh.
 6. Weekday names appear only as top column headers; date numbers sit top-left in compact day cells.
 7. Mock events render inside day cells as small time-ordered list items.
-8. The right agenda panel collapses/expands while preserving selected-day state and giving the calendar more room.
+8. Selecting dates and collapsing/expanding the right agenda panel preserves selected-day state; date selection updates from cached loaded-month events without a Google refresh.
 9. Settings opens as a separate dialog containing Google account connect/disconnect controls and calendar layer toggles.
 10. Without a local OAuth client JSON/token, mock calendar layers and events render safely.
 11. With a valid local OAuth client JSON, Connect opens the Google OAuth browser flow and then loads real calendar layers/events.

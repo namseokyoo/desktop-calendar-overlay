@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Net.Http;
@@ -26,6 +27,8 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private string _statusText = "Using mock calendar data. Connect Google Calendar from Settings.";
     private CalendarOverlaySettings _overlaySettings = new();
     private readonly StartupRegistrationService _startupRegistrationService = new();
+    private IReadOnlyList<CalendarEvent> _loadedMonthEvents = [];
+    private IReadOnlyDictionary<DateOnly, IReadOnlyList<CalendarEvent>> _loadedEventsByDate = new Dictionary<DateOnly, IReadOnlyList<CalendarEvent>>();
 
     public MainViewModel(
         ICalendarService calendarService,
@@ -119,7 +122,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             {
                 OnPropertyChanged(nameof(SelectedDateText));
                 OnPropertyChanged(nameof(SelectedDayHeading));
-                _ = LoadCalendarAsync();
+                RefreshSelectedDateFromCache();
             }
         }
     }
@@ -132,7 +135,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public string MonthTitle => _visibleMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
 
-    public string VersionLabel => "v0.6.0-polish-release-ready";
+    public string VersionLabel => "v0.6.1-performance-cache";
 
     public bool IsBusy
     {
@@ -536,6 +539,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private async Task LoadCalendarAsync()
     {
+        var stopwatch = Stopwatch.StartNew();
         try
         {
             IsBusy = true;
@@ -544,25 +548,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var calendarEnd = calendarStart.AddDays(42);
 
             var layers = ApplyLayerVisibilityOverrides(ApplyLayerColorOverrides(await _calendarService.GetLayersAsync()));
+            var visibleLayerIds = layers
+                .Where(layer => layer.IsVisible)
+                .Select(layer => layer.Id)
+                .ToHashSet(StringComparer.Ordinal);
             var monthEvents = ApplyLayerColors(await _calendarService.GetEventsAsync(calendarStart, calendarEnd), layers)
-                .Where(calendarEvent => layers.Any(layer => layer.Id == calendarEvent.CalendarLayerId && layer.IsVisible))
+                .Where(calendarEvent => visibleLayerIds.Contains(calendarEvent.CalendarLayerId))
                 .ToList();
 
             Replace(CalendarLayers, layers);
-            Replace(Days, BuildDays(calendarStart, monthStart, SelectedDate, monthEvents));
-            Replace(
-                SelectedDayEvents,
-                monthEvents
-                    .Where(calendarEvent => DateOnly.FromDateTime(calendarEvent.StartsAt.LocalDateTime) == SelectedDate)
-                    .OrderBy(calendarEvent => calendarEvent.IsAllDay ? 0 : 1)
-                    .ThenBy(calendarEvent => calendarEvent.StartsAt)
-                    .ToList());
+            UpdateLoadedEventCache(monthEvents);
+            Replace(Days, BuildDays(calendarStart, monthStart, SelectedDate, _loadedEventsByDate));
+            Replace(SelectedDayEvents, EventsForDate(SelectedDate));
 
             NotifyGoogleStateChanged();
-            var sourceLabel = IsGoogleConnected ? "Google Calendar" : "mock calendar";
-            StatusText = SelectedDayEvents.Count == 0
-                ? $"No events for the selected day. Source: {sourceLabel}."
-                : $"{SelectedDayEvents.Count} event{(SelectedDayEvents.Count == 1 ? string.Empty : "s")} selected. Source: {sourceLabel}.";
+            stopwatch.Stop();
+            AppDiagnostics.Info($"Calendar refresh loaded {monthEvents.Count} event(s) in {stopwatch.ElapsedMilliseconds} ms.");
+            SetSelectedDayStatus($" refreshed in {stopwatch.ElapsedMilliseconds} ms");
         }
         catch (Exception ex)
         {
@@ -599,25 +601,14 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     private void ApplyLayerColorToLoadedEvents(string layerId, string colorHex)
     {
-        var updatedDays = Days.Select(day => new CalendarDayViewModel
-        {
-            Date = day.Date,
-            DayNumber = day.DayNumber,
-            IsInCurrentMonth = day.IsInCurrentMonth,
-            IsToday = day.IsToday,
-            IsSelected = day.IsSelected,
-            Events = day.Events
-                .Select(calendarEvent => calendarEvent.CalendarLayerId == layerId
-                    ? calendarEvent with { LayerColorHex = colorHex }
-                    : calendarEvent)
-                .ToList()
-        }).ToList();
-        Replace(Days, updatedDays);
-        Replace(
-            SelectedDayEvents,
-            SelectedDayEvents.Select(calendarEvent => calendarEvent.CalendarLayerId == layerId
+        var updatedEvents = _loadedMonthEvents
+            .Select(calendarEvent => calendarEvent.CalendarLayerId == layerId
                 ? calendarEvent with { LayerColorHex = colorHex }
-                : calendarEvent).ToList());
+                : calendarEvent)
+            .ToList();
+        UpdateLoadedEventCache(updatedEvents);
+        Replace(Days, BuildDays(StartOfWeek(_visibleMonth), _visibleMonth, SelectedDate, _loadedEventsByDate));
+        Replace(SelectedDayEvents, EventsForDate(SelectedDate));
     }
 
     private static CalendarOverlaySettings NormalizeSettings(CalendarOverlaySettings settings)
@@ -702,11 +693,45 @@ public sealed class MainViewModel : INotifyPropertyChanged
         return $"{action}: {reason}. See diagnostic log: {AppDiagnostics.LogPath}";
     }
 
+    private void RefreshSelectedDateFromCache()
+    {
+        var stopwatch = Stopwatch.StartNew();
+        Replace(Days, BuildDays(StartOfWeek(_visibleMonth), _visibleMonth, SelectedDate, _loadedEventsByDate));
+        Replace(SelectedDayEvents, EventsForDate(SelectedDate));
+        stopwatch.Stop();
+        AppDiagnostics.Info($"Calendar date selection updated from cache in {stopwatch.ElapsedMilliseconds} ms for {SelectedDate:yyyy-MM-dd}.");
+        SetSelectedDayStatus($" selected from cache in {stopwatch.ElapsedMilliseconds} ms");
+    }
+
+    private void UpdateLoadedEventCache(IReadOnlyList<CalendarEvent> events)
+    {
+        _loadedMonthEvents = events;
+        _loadedEventsByDate = events
+            .GroupBy(calendarEvent => DateOnly.FromDateTime(calendarEvent.StartsAt.LocalDateTime))
+            .ToDictionary(
+                group => group.Key,
+                group => (IReadOnlyList<CalendarEvent>)group
+                    .OrderBy(calendarEvent => calendarEvent.IsAllDay ? 0 : 1)
+                    .ThenBy(calendarEvent => calendarEvent.StartsAt)
+                    .ToList());
+    }
+
+    private IReadOnlyList<CalendarEvent> EventsForDate(DateOnly date) =>
+        _loadedEventsByDate.TryGetValue(date, out var events) ? events : [];
+
+    private void SetSelectedDayStatus(string timingSuffix)
+    {
+        var sourceLabel = IsGoogleConnected ? "Google Calendar" : "mock calendar";
+        StatusText = SelectedDayEvents.Count == 0
+            ? $"No events for the selected day. Source: {sourceLabel};{timingSuffix}."
+            : $"{SelectedDayEvents.Count} event{(SelectedDayEvents.Count == 1 ? string.Empty : "s")} selected. Source: {sourceLabel};{timingSuffix}.";
+    }
+
     private static IReadOnlyList<CalendarDayViewModel> BuildDays(
         DateOnly calendarStart,
         DateOnly monthStart,
         DateOnly selectedDate,
-        IReadOnlyList<CalendarEvent> events)
+        IReadOnlyDictionary<DateOnly, IReadOnlyList<CalendarEvent>> eventsByDate)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
         return Enumerable.Range(0, 42)
@@ -718,11 +743,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 IsInCurrentMonth = date.Month == monthStart.Month,
                 IsToday = date == today,
                 IsSelected = date == selectedDate,
-                Events = events
-                    .Where(calendarEvent => DateOnly.FromDateTime(calendarEvent.StartsAt.LocalDateTime) == date)
-                    .OrderBy(calendarEvent => calendarEvent.IsAllDay ? 0 : 1)
-                    .ThenBy(calendarEvent => calendarEvent.StartsAt)
-                    .ToList()
+                Events = eventsByDate.TryGetValue(date, out var events) ? events : []
             })
             .ToList();
     }

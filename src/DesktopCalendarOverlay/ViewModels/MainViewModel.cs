@@ -24,7 +24,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private bool _isBusy;
     private bool _isDetailPanelExpanded = true;
     private DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today);
-    private string _statusText = "Using mock calendar data. Connect Google Calendar from Settings.";
+    private string _statusText = "Mock calendar mode. Connect Google Calendar in Settings.";
     private CalendarOverlaySettings _overlaySettings = new();
     private readonly StartupRegistrationService _startupRegistrationService = new();
     private IReadOnlyList<CalendarEvent> _loadedMonthEvents = [];
@@ -135,7 +135,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public string MonthTitle => _visibleMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
 
-    public string VersionLabel => "v0.6.1-performance-cache";
+    public string VersionLabel => "v0.7.0-ux-polish";
 
     public bool IsBusy
     {
@@ -379,7 +379,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var created = await _calendarService.CreateEventAsync(calendarEvent);
             SelectedDate = DateOnly.FromDateTime(created.StartsAt.LocalDateTime);
             await LoadCalendarAsync();
-            StatusText = $"Created event: {created.Title}";
+            StatusText = $"Event created: {created.Title}";
         }
         catch (Exception ex)
         {
@@ -400,7 +400,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             var updated = await _calendarService.UpdateEventAsync(calendarEvent);
             SelectedDate = DateOnly.FromDateTime(updated.StartsAt.LocalDateTime);
             await LoadCalendarAsync();
-            StatusText = $"Updated event: {updated.Title}";
+            StatusText = $"Event updated: {updated.Title}";
         }
         catch (Exception ex)
         {
@@ -420,7 +420,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             IsBusy = true;
             await _calendarService.DeleteEventAsync(calendarEvent);
             await LoadCalendarAsync();
-            StatusText = $"Deleted event: {calendarEvent.Title}";
+            StatusText = $"Event deleted: {calendarEvent.Title}";
         }
         catch (Exception ex)
         {
@@ -564,7 +564,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
             NotifyGoogleStateChanged();
             stopwatch.Stop();
             AppDiagnostics.Info($"Calendar refresh loaded {monthEvents.Count} event(s) in {stopwatch.ElapsedMilliseconds} ms.");
-            SetSelectedDayStatus($" refreshed in {stopwatch.ElapsedMilliseconds} ms");
+            SetSelectedDayStatus("Calendar updated.");
         }
         catch (Exception ex)
         {
@@ -700,7 +700,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
         Replace(SelectedDayEvents, EventsForDate(SelectedDate));
         stopwatch.Stop();
         AppDiagnostics.Info($"Calendar date selection updated from cache in {stopwatch.ElapsedMilliseconds} ms for {SelectedDate:yyyy-MM-dd}.");
-        SetSelectedDayStatus($" selected from cache in {stopwatch.ElapsedMilliseconds} ms");
+        SetSelectedDayStatus("Date selected.");
     }
 
     private void UpdateLoadedEventCache(IReadOnlyList<CalendarEvent> events)
@@ -719,12 +719,12 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private IReadOnlyList<CalendarEvent> EventsForDate(DateOnly date) =>
         _loadedEventsByDate.TryGetValue(date, out var events) ? events : [];
 
-    private void SetSelectedDayStatus(string timingSuffix)
+    private void SetSelectedDayStatus(string prefix)
     {
         var sourceLabel = IsGoogleConnected ? "Google Calendar" : "mock calendar";
         StatusText = SelectedDayEvents.Count == 0
-            ? $"No events for the selected day. Source: {sourceLabel};{timingSuffix}."
-            : $"{SelectedDayEvents.Count} event{(SelectedDayEvents.Count == 1 ? string.Empty : "s")} selected. Source: {sourceLabel};{timingSuffix}.";
+            ? $"{prefix} No events on this day. Source: {sourceLabel}."
+            : $"{prefix} {SelectedDayEvents.Count} event{(SelectedDayEvents.Count == 1 ? string.Empty : "s")} on this day. Source: {sourceLabel}.";
     }
 
     private static IReadOnlyList<CalendarDayViewModel> BuildDays(

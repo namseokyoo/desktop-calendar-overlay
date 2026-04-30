@@ -21,7 +21,7 @@
                            Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                            FontSize="30"
                            FontWeight="SemiBold" />
-                <TextBlock Text="Google account, calendar layer, display, and startup controls live here. v0.6 can connect a Desktop OAuth client, read Google Calendar layers/events, and falls back to mock data when no local client JSON/token is available."
+                <TextBlock Text="Connect Google Calendar, choose visible layers, and tune how the overlay sits on your desktop. If no local OAuth client JSON is available, the app stays in mock calendar mode."
                            TextWrapping="Wrap"
                            Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                            Margin="0,8,0,22" />
@@ -33,7 +33,7 @@
                         CornerRadius="18"
                         Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="Google account settings"
+                        <TextBlock Text="Google Calendar"
                                    Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                    FontSize="18"
                                    FontWeight="SemiBold" />
@@ -41,7 +41,7 @@
                                    Foreground="{DynamicResource OverlayAccentBrush}"
                                    FontWeight="SemiBold"
                                    Margin="0,10,0,0" />
-                        <TextBlock Text="Put the downloaded Google OAuth Desktop app JSON at this path, then click Connect. The browser consent flow stores tokens locally; no credential file is committed to the repo."
+                        <TextBlock Text="Place your downloaded Google OAuth Desktop app JSON at this path, then connect. Tokens stay in the local app data folder; credentials are never bundled with releases."
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                    Margin="0,6,0,8" />
@@ -78,11 +78,11 @@
                         CornerRadius="18"
                         Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="Calendar layer settings"
+                        <TextBlock Text="Calendar layers"
                                    Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                    FontSize="18"
                                    FontWeight="SemiBold" />
-                        <TextBlock Text="Google Calendar layers are loaded after connecting. Turn layers on/off here; v0.6 stores layer visibility locally and refreshes the month view immediately."
+                        <TextBlock Text="Turn calendars on or off and adjust their chip colors. Visibility and color choices are saved locally and applied immediately."
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                    Margin="0,6,0,12" />
@@ -136,11 +136,11 @@
                         CornerRadius="18"
                         Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="Display settings"
+                        <TextBlock Text="Display"
                                    Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                    FontSize="18"
                                    FontWeight="SemiBold" />
-                        <TextBlock Text="The event list still sorts by time; this only changes whether each item reads time-first or event-first."
+                        <TextBlock Text="Choose the event text order, theme, opacity, and event text size. Event order remains all-day first, then chronological."
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                    Margin="0,6,0,12" />
@@ -203,7 +203,7 @@
                         BorderThickness="1"
                         CornerRadius="18">
                     <StackPanel>
-                        <TextBlock Text="Overlay behavior"
+                        <TextBlock Text="Window behavior"
                                    Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                                    FontSize="18"
                                    FontWeight="SemiBold" />

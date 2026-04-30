@@ -18,15 +18,18 @@ public partial class CreateEventWindow : Window
         if (editingEvent is null)
         {
             EventDatePicker.SelectedDate = selectedDate.ToDateTime(TimeOnly.MinValue);
+            Title = "Create event";
             StartTimeBox.Text = "09:00";
             EndTimeBox.Text = "10:00";
             CalendarLayerBox.SelectedIndex = CalendarLayerBox.Items.Count > 0 ? 0 : -1;
+            UpdateTimeInputState();
             return;
         }
 
         Title = "Edit event";
         HeadingText.Text = "Edit event";
-        PrimaryActionButton.Content = "Save";
+        SubheadingText.Text = "Update this event without changing its calendar layer.";
+        PrimaryActionButton.Content = "Save changes";
         TitleBox.Text = editingEvent.Title;
         EventDatePicker.SelectedDate = editingEvent.StartsAt.LocalDateTime.Date;
         AllDayCheckBox.IsChecked = editingEvent.IsAllDay;
@@ -35,6 +38,7 @@ public partial class CreateEventWindow : Window
         LocationBox.Text = editingEvent.Location ?? string.Empty;
         CalendarLayerBox.SelectedItem = visibleLayers.FirstOrDefault(layer => layer.Id == editingEvent.CalendarLayerId);
         CalendarLayerBox.IsEnabled = false;
+        UpdateTimeInputState();
     }
 
     public CalendarEvent? CreatedEvent { get; private set; }
@@ -45,20 +49,20 @@ public partial class CreateEventWindow : Window
 
         if (CalendarLayerBox.SelectedItem is not CalendarLayer layer)
         {
-            ErrorText.Text = "Select a calendar layer first.";
+            ErrorText.Text = "Choose a calendar layer before creating the event.";
             return;
         }
 
         var title = TitleBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(title))
         {
-            ErrorText.Text = "Title is required.";
+            ErrorText.Text = "Add a title for this event.";
             return;
         }
 
         if (EventDatePicker.SelectedDate is not DateTime date)
         {
-            ErrorText.Text = "Date is required.";
+            ErrorText.Text = "Choose a date for this event.";
             return;
         }
 
@@ -75,7 +79,7 @@ public partial class CreateEventWindow : Window
         {
             if (!TryReadTime(StartTimeBox.Text, out var startTime) || !TryReadTime(EndTimeBox.Text, out var endTime))
             {
-                ErrorText.Text = "Use HH:mm time format, for example 09:30.";
+                ErrorText.Text = "Enter start and end times like 09:30 or choose All day.";
                 return;
             }
 
@@ -83,7 +87,7 @@ public partial class CreateEventWindow : Window
             var endDateTime = dateOnly.ToDateTime(endTime);
             if (endDateTime <= startDateTime)
             {
-                ErrorText.Text = "End time must be later than start time.";
+                ErrorText.Text = "End time must be later than the start time.";
                 return;
             }
 
@@ -104,6 +108,17 @@ public partial class CreateEventWindow : Window
     }
 
     private void OnCancelClick(object sender, RoutedEventArgs e) => DialogResult = false;
+
+    private void OnAllDayChanged(object sender, RoutedEventArgs e) => UpdateTimeInputState();
+
+    private void UpdateTimeInputState()
+    {
+        var isTimedEvent = AllDayCheckBox.IsChecked != true;
+        StartTimeBox.IsEnabled = isTimedEvent;
+        EndTimeBox.IsEnabled = isTimedEvent;
+        StartTimeBox.Opacity = isTimedEvent ? 1 : 0.55;
+        EndTimeBox.Opacity = isTimedEvent ? 1 : 0.55;
+    }
 
     private static bool TryReadTime(string raw, out TimeOnly time) =>
         TimeOnly.TryParseExact(raw.Trim(), ["H:mm", "HH:mm"], CultureInfo.CurrentCulture, DateTimeStyles.None, out time) ||

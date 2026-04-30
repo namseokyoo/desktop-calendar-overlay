@@ -16,11 +16,11 @@ Included in MVP planning:
 - Google Calendar read support behind service interfaces.
 - Google Calendar create/update/delete path for user-initiated single-event CRUD.
 - Separate Settings window for Google authentication, connect/disconnect, and calendar layer selection.
-- v0.6 Google Calendar OAuth/read/create/update/delete path with mock fallback when no local client JSON/token is available.
+- Google Calendar OAuth/read/create/update/delete path with mock fallback when no local client JSON/token is available.
 - Today date-number badge, display-format setting, opacity slider, event-list text-size slider, layer color palette, and theme selector in Settings.
 - No repeat/attendee workflows in MVP.
 
-This build is `0.6.1-performance-cache`: a WPF shell plus Google Calendar read/create/update/delete integration, stable error reporting, persisted display/layer settings, tray controls, Windows startup option, and release-readiness docs. It does **not** contain Google OAuth credentials, Google Cloud configuration, tokens, or user calendar exports.
+This build is `0.7.0-ux-polish`: a WPF shell plus Google Calendar read/create/update/delete integration, stable error reporting, persisted display/layer settings, tray controls, Windows startup option, performance-cache date selection, and visual/UX polish for long-running desktop use. It does **not** contain Google OAuth credentials, Google Cloud configuration, tokens, or user calendar exports.
 
 ## Prerequisites
 
@@ -46,19 +46,18 @@ Diagnostics are written to:
 %LOCALAPPDATA%\DesktopCalendarOverlay\logs\startup.log
 ```
 
-Release packaging currently uses ZIP artifacts, not an installer/MSIX. The Windows release workflow publishes:
+Release packaging uses one ZIP artifact, not an installer/MSIX. Starting with v0.7, the Windows release workflow publishes only:
 
 - `desktop-calendar-overlay-win-x64.zip` — self-contained Windows x64 single-file publish output.
-- `desktop-calendar-overlay-win-x64-portable.zip` — self-contained Windows x64 portable folder publish output.
 
 Extract a ZIP on Windows and run `DesktopCalendarOverlay.exe`. OAuth credentials/tokens are not bundled; real Google Calendar sync still requires the local Desktop OAuth client JSON described below.
 
-## Known v0.6.x limitations
+## Known v0.7 limitations
 
 - WPF visual/runtime validation is Windows-only.
 - Real Google sync requires a local Google OAuth Desktop app JSON and permitted test user/consent setup.
 - Repeat events and attendee/invitation workflows are intentionally out of MVP scope.
-- Packaging is ZIP-based for now; no installer, auto-update, or MSIX package is included.
+- Packaging is a single self-contained win-x64 ZIP; separate portable-folder ZIPs are deprecated, and no installer, auto-update, or MSIX package is included.
 
 ## Windows validation
 
@@ -69,7 +68,7 @@ From a Windows terminal at the repository root:
 dotnet run --project .\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj
 ```
 
-Manual release checks are tracked in [`docs/QA_CHECKLIST_v0.6.0.md`](docs/QA_CHECKLIST_v0.6.0.md), with v0.6.1 performance-cache points included. Summary checks:
+Manual release checks are tracked in [`docs/QA_CHECKLIST_v0.7.0.md`](docs/QA_CHECKLIST_v0.7.0.md). Summary checks:
 
 1. Window opens without normal OS chrome and remains resizable.
 2. Position lock prevents title-drag movement/resizing after placing the overlay.
@@ -85,7 +84,7 @@ Manual release checks are tracked in [`docs/QA_CHECKLIST_v0.6.0.md`](docs/QA_CHE
 12. Click `+ Add event` from the selected-day panel, create a single event, and verify it appears in Google Calendar after refresh.
 13. Use `Edit` and `Delete` from the selected-day detail panel and verify the Google Calendar event updates/deletes after refresh.
 14. Settings can switch event display between `time · event` and `event · time` while preserving time sorting.
-15. Settings can adjust overlay opacity, event-list text size, calendar layer visibility/colors via the current-color circle/native palette, and switch between built-in themes; changes persist after restart.
+15. Settings can adjust overlay opacity, event-list text size, calendar layer visibility/colors via the current-color circle/native palette, and switch between built-in themes, including Ivory Editorial; changes persist after restart.
 16. Tray menu exposes Show/Hide, Settings, Refresh, and Exit; Windows startup can be enabled/disabled from Settings.
 17. The app/window/taskbar icon uses the calendar `.ico` asset.
 
@@ -101,4 +100,4 @@ scripts/                      Windows-side validation helper
 
 ## Security notes
 
-Do not commit OAuth client secrets, refresh tokens, exported credential files, or Google Cloud project configuration. For local v0.5 testing, place the Desktop OAuth client JSON at `%LOCALAPPDATA%\DesktopCalendarOverlay\google-oauth-client.json`; the app stores tokens under `%LOCALAPPDATA%\DesktopCalendarOverlay\google-token-store`. See [`docs/OAUTH_AND_SECURITY.md`](docs/OAUTH_AND_SECURITY.md).
+Do not commit OAuth client secrets, refresh tokens, exported credential files, or Google Cloud project configuration. For local testing, place the Desktop OAuth client JSON at `%LOCALAPPDATA%\DesktopCalendarOverlay\google-oauth-client.json`; the app stores tokens under `%LOCALAPPDATA%\DesktopCalendarOverlay\google-token-store`. See [`docs/OAUTH_AND_SECURITY.md`](docs/OAUTH_AND_SECURITY.md).

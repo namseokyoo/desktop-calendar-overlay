@@ -1,16 +1,15 @@
-# Desktop Calendar Overlay v0.6.0/v0.6.1 Manual QA Checklist
+# Desktop Calendar Overlay v0.7.0 Manual QA Checklist
 
-Version under test: `0.6.1-performance-cache`
+Version under test: `0.7.0-ux-polish`
 
-Use this as the canonical release-readiness checklist for v0.6.0 and the v0.6.1 performance-cache patch. Do not paste OAuth client JSON, tokens, authorization codes, refresh tokens, or private calendar payloads into reports.
-
-Archived note: v0.7.0 and later use [`QA_CHECKLIST_v0.7.0.md`](QA_CHECKLIST_v0.7.0.md) and publish only the single self-contained `desktop-calendar-overlay-win-x64.zip`; the separate portable-folder ZIP below is historical v0.6.x policy.
+Use this as the canonical release-readiness checklist for v0.7.0. Do not paste OAuth client JSON, tokens, authorization codes, refresh tokens, or private calendar payloads into reports.
 
 ## 1. Build and artifact preflight
 
 - [ ] On Windows with .NET 8 SDK, run `./scripts/windows-validate.ps1` from the repo root.
 - [ ] Run `dotnet build .\DesktopCalendarOverlay.sln --configuration Release --no-restore` after restore.
-- [ ] Publish both ZIP shapes described in `README.md`: single-file and portable-folder Windows x64.
+- [ ] Publish only `desktop-calendar-overlay-win-x64.zip`, the self-contained Windows x64 single-file ZIP.
+- [ ] Confirm no `desktop-calendar-overlay-win-x64-portable.zip` is produced or attached for v0.7.
 - [ ] Confirm release artifacts do not include OAuth client JSON, token stores, or local logs.
 
 ## 2. Mock/no-credential mode
@@ -32,19 +31,24 @@ Archived note: v0.7.0 and later use [`QA_CHECKLIST_v0.7.0.md`](QA_CHECKLIST_v0.7
 
 ## 4. Calendar UI polish
 
-- [ ] Today badge/date number is visually distinct.
-- [ ] Upcoming events in the next 24 hours are emphasized in preview/detail cards.
+- [ ] Today, selected date, dates with events, and out-of-month dates are visually distinct in the month grid.
+- [ ] Day-cell event chips remain readable for all-day events, timed events, long titles, and `+N more` overflow.
+- [ ] Upcoming events in the next 24 hours are emphasized in preview/detail cards without hiding layer color.
 - [ ] Previous/next month updates the calendar grid without losing stability and performs a real calendar refresh.
-- [ ] Selecting several dates in the already-loaded month updates the detail panel immediately from cache; status/log timing should report cached selection, with no visible Google refresh spinner/network delay.
-- [ ] Initial startup/manual refresh timing remains distinguishable from cached date-selection timing in status text or diagnostics.
+- [ ] Selecting several dates in the already-loaded month updates the detail panel immediately from cache; diagnostics should report cached selection without visible Google refresh delay.
+- [ ] Empty selected days show a clear no-events state with an obvious add-event path.
 - [ ] Long event titles truncate/wrap without breaking day cells or detail cards.
 - [ ] Long locations wrap/truncate in the detail card and remain readable via tooltip.
 - [ ] Detail panel expands/collapses without losing selected-day state.
 - [ ] Event order remains all-day first, then chronological.
 
-## 5. Settings persistence
+## 5. Settings and theme persistence
 
+- [ ] Settings copy clearly explains Google connection, calendar layers, display, and window behavior.
+- [ ] OAuth JSON path remains visible; there is no import/upload flow.
 - [ ] Theme selection persists after app restart.
+- [ ] Ivory Editorial is legible as a representative light theme.
+- [ ] Acrylic Dark and Midnight Blue remain legible regressions.
 - [ ] Overlay opacity persists after app restart.
 - [ ] Event text-size slider persists after app restart.
 - [ ] Event display format (`time · event` / `event · time`) persists after app restart.
@@ -59,6 +63,9 @@ Archived note: v0.7.0 and later use [`QA_CHECKLIST_v0.7.0.md`](QA_CHECKLIST_v0.7
 - [ ] Network/token/list failures show a user-visible status error and write diagnostics instead of crashing.
 - [ ] Refresh after reconnect/token change updates calendar layers/events.
 - [ ] Month navigation, manual refresh, connect/disconnect, layer visibility changes, and add/edit/delete flows still refresh Google Calendar data as appropriate.
+- [ ] Create dialog distinguishes create vs edit copy and action labels.
+- [ ] Time hints are clear; all-day state disables timed input without losing date/title/location.
+- [ ] Validation messages are understandable for missing layer, title, date, bad time, and end-before-start.
 - [ ] Create a timed event and verify it appears in Google Calendar after refresh.
 - [ ] Create an all-day event and verify it appears in Google Calendar after refresh.
 - [ ] Edit title, time/date, and location; verify Google Calendar reflects the change after refresh.
@@ -67,6 +74,7 @@ Archived note: v0.7.0 and later use [`QA_CHECKLIST_v0.7.0.md`](QA_CHECKLIST_v0.7
 
 ## 7. Logs and known limitations
 
+- [ ] Bottom status text is concise and user-facing; detailed timing remains in diagnostics.
 - [ ] Diagnostics are written to `%LOCALAPPDATA%\DesktopCalendarOverlay\logs\startup.log`.
 - [ ] Logs contain no OAuth secrets, tokens, authorization headers, or raw private calendar payloads.
-- [ ] Known v0.6.x limitations are accepted: Windows-only WPF validation, local OAuth Desktop client setup required for real sync, no repeat/attendee workflows, and no installer/MSIX yet.
+- [ ] Known v0.7 limitations are accepted: Windows-only WPF validation, local OAuth Desktop client setup required for real sync, no repeat/attendee workflows, no separate portable ZIP, and no installer/MSIX/auto-update.

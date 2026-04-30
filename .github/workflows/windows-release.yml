@@ -41,21 +41,11 @@ jobs:
           -p:EnableCompressionInSingleFile=true
           --output .\artifacts\publish\desktop-calendar-overlay-win-x64
 
-      - name: Publish self-contained Windows x64 portable folder
-        run: >-
-          dotnet publish .\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj
-          --configuration Release
-          --runtime win-x64
-          --self-contained true
-          -p:PublishSingleFile=false
-          --output .\artifacts\publish\desktop-calendar-overlay-win-x64-portable
-
       - name: Create release zips
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path .\artifacts\release | Out-Null
           Compress-Archive -Path .\artifacts\publish\desktop-calendar-overlay-win-x64\* -DestinationPath .\artifacts\release\desktop-calendar-overlay-win-x64.zip -Force
-          Compress-Archive -Path .\artifacts\publish\desktop-calendar-overlay-win-x64-portable\* -DestinationPath .\artifacts\release\desktop-calendar-overlay-win-x64-portable.zip -Force
           Get-ChildItem .\artifacts\release
 
       - name: Upload build artifacts

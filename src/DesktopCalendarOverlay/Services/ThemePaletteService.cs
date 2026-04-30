@@ -11,8 +11,8 @@ public static class ThemePaletteService
         var palette = themeName switch
         {
             CalendarThemeNames.IvoryEditorial => new Palette(
-                "#EDEFE8DD", "#DFF8F3E8", "#BFF4E7CF", "#F5FFF7E8", "#667A1F1F",
-                "#A09A3412", "#FF1F2933", "#FF475569", "#AA64748B", "#FF991B1B", "#33991B1B"),
+                "#F2F8F4EA", "#E6FFF9EE", "#BFE8E0CF", "#FAFFFDF4", "#7A7C3F2D",
+                "#B85F6F52", "#FF172033", "#FF435066", "#AA64748B", "#FF8B3A2F", "#338B3A2F"),
             CalendarThemeNames.MidnightBlue => new Palette(
                 "#E6091020", "#AA111C35", "#66111C35", "#DD0B1226", "#6686A5FF",
                 "#CC8FB3FF", "#FFEFF6FF", "#FFB6C7E6", "#8890A4C5", "#FF8FB3FF", "#338FB3FF"),

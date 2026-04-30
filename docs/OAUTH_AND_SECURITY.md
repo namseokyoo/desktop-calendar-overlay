@@ -2,7 +2,7 @@
 
 ## Current state
 
-This build contains a v0.6 Google Calendar read/create/update/delete integration. Without a local OAuth Desktop app client JSON and token, it safely falls back to mock calendar data. No OAuth client secrets, refresh tokens, access tokens, or Google Cloud configuration are committed to the repo.
+This build contains Google Calendar read/create/update/delete integration. Without a local OAuth Desktop app client JSON and token, it safely falls back to mock calendar data. No OAuth client secrets, refresh tokens, access tokens, or Google Cloud configuration are committed to the repo.
 
 ## OAuth mode for MVP development
 
@@ -13,7 +13,7 @@ This build contains a v0.6 Google Calendar read/create/update/delete integration
 
 ## Local OAuth file locations
 
-For v0.6 local testing, place the downloaded Google Cloud **Desktop app** OAuth JSON here on Windows:
+For local testing, place the downloaded Google Cloud **Desktop app** OAuth JSON here on Windows:
 
 ```text
 %LOCALAPPDATA%\DesktopCalendarOverlay\google-oauth-client.json

@@ -69,6 +69,20 @@ jobs:
           $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
           "screen=$($bounds.Width)x$($bounds.Height) at $($bounds.X),$($bounds.Y)" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
 
+          # Cover the runner console/log desktop with a clean portfolio backdrop so the transparent overlay
+          # captures like a product screenshot rather than a CI diagnostic desktop.
+          $backdrop = New-Object System.Windows.Forms.Form
+          $backdrop.Text = 'Desktop Calendar Overlay portfolio backdrop'
+          $backdrop.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
+          $backdrop.StartPosition = [System.Windows.Forms.FormStartPosition]::Manual
+          $backdrop.Bounds = $bounds
+          $backdrop.BackColor = [System.Drawing.Color]::FromArgb(13, 18, 30)
+          $backdrop.ShowInTaskbar = $false
+          $backdrop.Show()
+          $backdrop.BringToFront()
+          [System.Windows.Forms.Application]::DoEvents()
+          Start-Sleep -Seconds 1
+
           $main = Get-Process -Id $proc.Id -ErrorAction SilentlyContinue
           if ($main -and $main.MainWindowHandle -ne 0) {
             [Win32]::ShowWindow($main.MainWindowHandle, 3) | Out-Null # SW_MAXIMIZE

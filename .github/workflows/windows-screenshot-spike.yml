@@ -58,14 +58,32 @@ jobs:
 
           Add-Type -AssemblyName System.Windows.Forms
           Add-Type -AssemblyName System.Drawing
+          Add-Type @"
+          using System;
+          using System.Runtime.InteropServices;
+          public static class Win32 {
+            [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+            [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+          }
+          "@
           $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
           "screen=$($bounds.Width)x$($bounds.Height) at $($bounds.X),$($bounds.Y)" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+
+          $main = Get-Process -Id $proc.Id -ErrorAction SilentlyContinue
+          if ($main -and $main.MainWindowHandle -ne 0) {
+            [Win32]::ShowWindow($main.MainWindowHandle, 3) | Out-Null # SW_MAXIMIZE
+            [Win32]::SetForegroundWindow($main.MainWindowHandle) | Out-Null
+            "maximizedHandle=$($main.MainWindowHandle)" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+            Start-Sleep -Seconds 3
+          } else {
+            "maximizedHandle=not-found" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+          }
 
           $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
           $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
           $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
           $graphics.Dispose()
-          $bitmap.Save((Resolve-Path .\artifacts\screenshots).Path + '\desktop-calendar-overlay-fullscreen.png', [System.Drawing.Imaging.ImageFormat]::Png)
+          $bitmap.Save((Resolve-Path .\artifacts\screenshots).Path + '\desktop-calendar-overlay-maximized-fullscreen.png', [System.Drawing.Imaging.ImageFormat]::Png)
           $bitmap.Dispose()
 
           Get-Process | Where-Object { $_.ProcessName -like '*DesktopCalendarOverlay*' } | Select-Object ProcessName, Id, MainWindowTitle, MainWindowHandle | Format-Table -AutoSize | Out-String | Out-File .\artifacts\logs\processes.txt -Encoding utf8

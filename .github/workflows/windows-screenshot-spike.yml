@@ -1,0 +1,85 @@
+name: Windows Screenshot Spike
+
+on:
+  push:
+    branches:
+      - ci/windows-screenshot-spike
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  screenshot:
+    name: Build, launch, and capture WPF screenshot
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        run: dotnet restore .\DesktopCalendarOverlay.sln
+
+      - name: Publish diagnostic folder build
+        run: >-
+          dotnet publish .\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj
+          --configuration Release
+          --runtime win-x64
+          --self-contained true
+          -p:PublishSingleFile=false
+          --output .\artifacts\publish\desktop-calendar-overlay-win-x64
+
+      - name: Launch app and capture screen
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          New-Item -ItemType Directory -Force -Path .\artifacts\screenshots | Out-Null
+          New-Item -ItemType Directory -Force -Path .\artifacts\logs | Out-Null
+
+          $exe = Resolve-Path .\artifacts\publish\desktop-calendar-overlay-win-x64\DesktopCalendarOverlay.exe
+          "exe=$exe" | Out-File .\artifacts\logs\screenshot-spike.log -Encoding utf8
+
+          $proc = Start-Process -FilePath $exe -PassThru
+          "pid=$($proc.Id)" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+
+          Start-Sleep -Seconds 12
+          $proc.Refresh()
+          "hasExited=$($proc.HasExited)" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+          if ($proc.HasExited) {
+            "exitCode=$($proc.ExitCode)" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+          }
+
+          Add-Type -AssemblyName System.Windows.Forms
+          Add-Type -AssemblyName System.Drawing
+          $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          "screen=$($bounds.Width)x$($bounds.Height) at $($bounds.X),$($bounds.Y)" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+
+          $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
+          $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
+          $graphics.CopyFromScreen($bounds.Location, [System.Drawing.Point]::Empty, $bounds.Size)
+          $graphics.Dispose()
+          $bitmap.Save((Resolve-Path .\artifacts\screenshots).Path + '\desktop-calendar-overlay-fullscreen.png', [System.Drawing.Imaging.ImageFormat]::Png)
+          $bitmap.Dispose()
+
+          Get-Process | Where-Object { $_.ProcessName -like '*DesktopCalendarOverlay*' } | Select-Object ProcessName, Id, MainWindowTitle, MainWindowHandle | Format-Table -AutoSize | Out-String | Out-File .\artifacts\logs\processes.txt -Encoding utf8
+
+          if (-not $proc.HasExited) {
+            Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Upload screenshot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-calendar-overlay-screenshot-spike
+          path: |
+            .\artifacts\screenshots\*.png
+            .\artifacts\logs\*.log
+            .\artifacts\logs\*.txt
+          if-no-files-found: error

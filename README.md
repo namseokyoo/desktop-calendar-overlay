@@ -1,5 +1,7 @@
 # Desktop Calendar Overlay
 
+![Desktop Calendar Overlay portfolio screenshot](docs/assets/desktop-calendar-overlay-portfolio.png)
+
 Desktop Calendar Overlay is a Windows desktop calendar MVP for keeping a large, low-distraction Google Calendar view visible while working. The MVP direction is a Windows 11-style **acrylic glass + minimal productivity** overlay: a borderless, resizable WPF shell with compact month navigation, a collapsible day-detail panel, and a separate settings window for Google account/layer controls.
 
 This is the standalone implementation repository for the Windows Desktop Calendar Overlay app. Planning history and post-MVP ideas remain in the SidequestLab planning project and are intentionally not copied into this MVP implementation scope.

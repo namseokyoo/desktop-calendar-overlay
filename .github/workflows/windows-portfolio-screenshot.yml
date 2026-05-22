@@ -1,9 +1,6 @@
-name: Windows Screenshot Spike
+name: Windows Portfolio Screenshot
 
 on:
-  push:
-    branches:
-      - ci/windows-screenshot-spike
   workflow_dispatch:
 
 permissions:
@@ -44,16 +41,16 @@ jobs:
           New-Item -ItemType Directory -Force -Path .\artifacts\logs | Out-Null
 
           $exe = Resolve-Path .\artifacts\publish\desktop-calendar-overlay-win-x64\DesktopCalendarOverlay.exe
-          "exe=$exe" | Out-File .\artifacts\logs\screenshot-spike.log -Encoding utf8
+          "exe=$exe" | Out-File .\artifacts\logs\portfolio-screenshot.log -Encoding utf8
 
           $proc = Start-Process -FilePath $exe -PassThru
-          "pid=$($proc.Id)" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+          "pid=$($proc.Id)" | Out-File .\artifacts\logs\portfolio-screenshot.log -Append -Encoding utf8
 
           Start-Sleep -Seconds 12
           $proc.Refresh()
-          "hasExited=$($proc.HasExited)" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+          "hasExited=$($proc.HasExited)" | Out-File .\artifacts\logs\portfolio-screenshot.log -Append -Encoding utf8
           if ($proc.HasExited) {
-            "exitCode=$($proc.ExitCode)" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+            "exitCode=$($proc.ExitCode)" | Out-File .\artifacts\logs\portfolio-screenshot.log -Append -Encoding utf8
           }
 
           Add-Type -AssemblyName System.Windows.Forms
@@ -67,7 +64,7 @@ jobs:
           }
           "@
           $bounds = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-          "screen=$($bounds.Width)x$($bounds.Height) at $($bounds.X),$($bounds.Y)" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+          "screen=$($bounds.Width)x$($bounds.Height) at $($bounds.X),$($bounds.Y)" | Out-File .\artifacts\logs\portfolio-screenshot.log -Append -Encoding utf8
 
           # Cover the runner console/log desktop with a clean portfolio backdrop so the transparent overlay
           # captures like a product screenshot rather than a CI diagnostic desktop.
@@ -87,10 +84,10 @@ jobs:
           if ($main -and $main.MainWindowHandle -ne 0) {
             [Win32]::ShowWindow($main.MainWindowHandle, 3) | Out-Null # SW_MAXIMIZE
             [Win32]::SetForegroundWindow($main.MainWindowHandle) | Out-Null
-            "maximizedHandle=$($main.MainWindowHandle)" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+            "maximizedHandle=$($main.MainWindowHandle)" | Out-File .\artifacts\logs\portfolio-screenshot.log -Append -Encoding utf8
             Start-Sleep -Seconds 3
           } else {
-            "maximizedHandle=not-found" | Out-File .\artifacts\logs\screenshot-spike.log -Append -Encoding utf8
+            "maximizedHandle=not-found" | Out-File .\artifacts\logs\portfolio-screenshot.log -Append -Encoding utf8
           }
 
           $bitmap = New-Object System.Drawing.Bitmap $bounds.Width, $bounds.Height
@@ -109,7 +106,7 @@ jobs:
       - name: Upload screenshot artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: desktop-calendar-overlay-screenshot-spike
+          name: desktop-calendar-overlay-portfolio-screenshot
           path: |
             .\artifacts\screenshots\*.png
             .\artifacts\logs\*.log

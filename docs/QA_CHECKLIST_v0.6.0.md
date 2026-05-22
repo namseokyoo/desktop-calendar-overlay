@@ -4,7 +4,7 @@ Version under test: `0.6.1-performance-cache`
 
 Use this as the canonical release-readiness checklist for v0.6.0 and the v0.6.1 performance-cache patch. Do not paste OAuth client JSON, tokens, authorization codes, refresh tokens, or private calendar payloads into reports.
 
-Archived note: v0.7.0 and later use [`QA_CHECKLIST_v0.7.0.md`](QA_CHECKLIST_v0.7.0.md) and publish only the single self-contained `desktop-calendar-overlay-win-x64.zip`; the separate portable-folder ZIP below is historical v0.6.x policy.
+Archived note: v0.7.x and later use the current v0.7 release checklist (for example [`QA_CHECKLIST_v0.7.1.md`](QA_CHECKLIST_v0.7.1.md)) and publish only the single self-contained `desktop-calendar-overlay-win-x64.zip`; the separate portable-folder ZIP below is historical v0.6.x policy.
 
 ## 1. Build and artifact preflight
 

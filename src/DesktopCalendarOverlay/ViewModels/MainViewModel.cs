@@ -135,7 +135,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public string MonthTitle => _visibleMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
 
-    public string VersionLabel => "v0.7.0-ux-polish";
+    public string VersionLabel => "v0.7.1-portfolio-readiness";
 
     public bool IsBusy
     {

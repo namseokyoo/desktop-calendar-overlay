@@ -26,7 +26,7 @@ Write-Host "== run command =="
 Write-Host "dotnet run --project $Project"
 
 Write-Host "== manual visual validation checklist =="
-Write-Host "Canonical v0.7.0 checklist: docs/QA_CHECKLIST_v0.7.0.md"
+Write-Host "Canonical v0.7.1 checklist: docs/QA_CHECKLIST_v0.7.1.md"
 Write-Host "[ ] Borderless window opens with custom chrome only."
 Write-Host "[ ] Dragging the title area moves the window; double-click toggles maximize/restore."
 Write-Host "[ ] Resize works on all edges and corners."

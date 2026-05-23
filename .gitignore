@@ -38,6 +38,8 @@ project.assets.json
 *.pid
 
 # Secrets / local config
+google-oauth-client*.json
+*.oauth-client.json
 *.pfx
 *.p12
 *.key

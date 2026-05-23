@@ -6,8 +6,8 @@ This document captures the work needed before Desktop Calendar Overlay can move 
 
 - App type: Windows desktop app.
 - Backend: none. Calendar data and OAuth tokens stay local to the user's machine.
-- Current connection path: developer/tester mode with a user-provided Desktop OAuth JSON file at the app's documented local path.
-- v0.9 code state: OAuth client loading is abstracted behind `IOAuthClientProvider`, and token persistence is abstracted behind `ITokenStore`, so the current local JSON provider can be replaced later by an official app-owned provider without rewriting calendar sync logic.
+- Current connection path: official app-owned Desktop OAuth JSON is now the preferred provider path when packaged or supplied through the release environment; user-provided local Desktop OAuth JSON remains as a developer fallback.
+- v0.95 code state: OAuth client loading is abstracted behind `IOAuthClientProvider`, token persistence is abstracted behind `ITokenStore`, and `CompositeOAuthClientProvider` selects `OfficialGoogleOAuthClientProvider` before `LocalJsonOAuthClientProvider`.
 
 ## Verification claims that must remain true
 
@@ -45,10 +45,10 @@ The app currently references Google Calendar APIs for read/write calendar operat
 ## Official-client implementation path
 
 1. Keep `LocalJsonOAuthClientProvider` as developer/tester fallback until public verification is complete.
-2. Add a new official provider implementation only after a verified client distribution path is decided.
+2. Inject `google-oauth-client.official.json` only from the approved release packaging path or `DCO_GOOGLE_OAUTH_CLIENT_JSON`; never commit the real file to Git.
 3. Ensure the official provider never commits client secrets or platform-private credentials to Git.
 4. Preserve `IOAuthClientProvider.Availability` states so UI can distinguish missing, local JSON, and official-client readiness.
-5. Re-run the full v0.9 validation checklist and Windows smoke before any public tag.
+5. Re-run the full v0.95 validation checklist and Windows smoke before any public tag.
 
 ## Blockers before public OAuth claim
 

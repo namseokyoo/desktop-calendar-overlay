@@ -348,7 +348,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             if (_googleIntegration.OAuthClientAvailability == OAuthClientAvailability.Missing)
             {
-                return "Mock mode: no OAuth JSON found.";
+                return "Mock mode: no official OAuth client configured.";
             }
 
             return _googleIntegration.OAuthClientAvailability switch
@@ -357,9 +357,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
                     "Connected: Google Calendar sync enabled via local OAuth JSON.",
                 OAuthClientAvailability.LocalJson =>
                     "Ready to connect: local OAuth JSON found, not connected.",
-                OAuthClientAvailability.FutureOfficial when _googleIntegration.IsUsingGoogle =>
+                OAuthClientAvailability.Official when _googleIntegration.IsUsingGoogle =>
                     "Connected: Google Calendar sync enabled via official OAuth client.",
-                OAuthClientAvailability.FutureOfficial =>
+                OAuthClientAvailability.Official =>
                     "Ready to connect: official OAuth client available, not connected.",
                 _ => "Mock mode: no OAuth client available."
             };
@@ -377,7 +377,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
             if (_googleIntegration.OAuthClientAvailability == OAuthClientAvailability.Missing)
             {
-                return "Developer/tester mode is using mock calendar data. Add the local Desktop OAuth JSON to enable Connect.";
+                return "This public build is using mock calendar data until an official OAuth client is packaged; developers can still add a local Desktop OAuth JSON fallback.";
             }
 
             return _googleIntegration.OAuthClientAvailability switch
@@ -386,9 +386,9 @@ public sealed class MainViewModel : INotifyPropertyChanged
                     "Disconnect removes local token/cache state and returns the app to mock fallback after refresh or restart.",
                 OAuthClientAvailability.LocalJson =>
                     "Developer/tester mode is ready. Connect opens the Google OAuth browser flow for an allowed test user.",
-                OAuthClientAvailability.FutureOfficial when _googleIntegration.IsUsingGoogle =>
+                OAuthClientAvailability.Official when _googleIntegration.IsUsingGoogle =>
                     "Disconnect removes local token/cache state and returns the app to mock fallback after refresh or restart.",
-                OAuthClientAvailability.FutureOfficial =>
+                OAuthClientAvailability.Official =>
                     "Official OAuth client mode is available but must still complete Google sign-in before sync starts.",
                 _ => "Developer/tester mode is using mock calendar data. Add the local Desktop OAuth JSON to enable Connect."
             };

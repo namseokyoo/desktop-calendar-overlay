@@ -30,7 +30,7 @@ public sealed class GoogleCalendarService : ICalendarService, IGoogleCalendarInt
     {
         _settingsStore = settingsStore;
         _tokenStore = tokenStore ?? new LocalGoogleTokenStore();
-        _oauthClientProvider = oauthClientProvider ?? new LocalJsonOAuthClientProvider();
+        _oauthClientProvider = oauthClientProvider ?? new CompositeOAuthClientProvider();
     }
 
     public string ClientSecretPath => _oauthClientProvider.ClientSecretPath;

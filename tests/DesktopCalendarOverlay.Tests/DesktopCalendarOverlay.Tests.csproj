@@ -21,6 +21,7 @@
     <Compile Include="..\..\src\DesktopCalendarOverlay\Models\CalendarOverlaySettings.cs" Link="Models\CalendarOverlaySettings.cs" />
     <Compile Include="..\..\src\DesktopCalendarOverlay\Services\AppDiagnostics.cs" Link="Services\AppDiagnostics.cs" />
     <Compile Include="..\..\src\DesktopCalendarOverlay\Services\CalendarServiceRouter.cs" Link="Services\CalendarServiceRouter.cs" />
+    <Compile Include="..\..\src\DesktopCalendarOverlay\Services\CompositeOAuthClientProvider.cs" Link="Services\CompositeOAuthClientProvider.cs" />
     <Compile Include="..\..\src\DesktopCalendarOverlay\Services\GoogleCalendarService.cs" Link="Services\GoogleCalendarService.cs" />
     <Compile Include="..\..\src\DesktopCalendarOverlay\Services\ICalendarService.cs" Link="Services\ICalendarService.cs" />
     <Compile Include="..\..\src\DesktopCalendarOverlay\Services\IGoogleCalendarIntegration.cs" Link="Services\IGoogleCalendarIntegration.cs" />
@@ -31,5 +32,6 @@
     <Compile Include="..\..\src\DesktopCalendarOverlay\Services\LocalGoogleTokenStore.cs" Link="Services\LocalGoogleTokenStore.cs" />
     <Compile Include="..\..\src\DesktopCalendarOverlay\Services\LocalJsonOAuthClientProvider.cs" Link="Services\LocalJsonOAuthClientProvider.cs" />
     <Compile Include="..\..\src\DesktopCalendarOverlay\Services\MockCalendarService.cs" Link="Services\MockCalendarService.cs" />
+    <Compile Include="..\..\src\DesktopCalendarOverlay\Services\OfficialGoogleOAuthClientProvider.cs" Link="Services\OfficialGoogleOAuthClientProvider.cs" />
   </ItemGroup>
 </Project>

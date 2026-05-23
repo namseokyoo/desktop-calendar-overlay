@@ -23,7 +23,9 @@ public partial class MainWindow : Window
         var settingsStore = new JsonSettingsStore();
         _windowPlacementService = new WindowPlacementService(settingsStore);
         var tokenStore = new LocalGoogleTokenStore();
-        var oauthClientProvider = new LocalJsonOAuthClientProvider();
+        var oauthClientProvider = new CompositeOAuthClientProvider(
+            new OfficialGoogleOAuthClientProvider(),
+            new LocalJsonOAuthClientProvider());
         var googleCalendarService = new GoogleCalendarService(settingsStore, tokenStore, oauthClientProvider);
         var calendarService = new CalendarServiceRouter(googleCalendarService, new MockCalendarService());
         _viewModel = new MainViewModel(calendarService, calendarService, settingsStore);

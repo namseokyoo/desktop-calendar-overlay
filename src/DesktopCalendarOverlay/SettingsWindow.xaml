@@ -21,7 +21,7 @@
                            Foreground="{DynamicResource OverlayTextPrimaryBrush}"
                            FontSize="30"
                            FontWeight="SemiBold" />
-                <TextBlock Text="Google sync is in developer/tester mode. Connect Google Calendar only after placing a local Desktop OAuth JSON on this Windows machine; otherwise the app stays in mock calendar mode."
+                <TextBlock Text="Google sync now prefers the official app OAuth client when it is packaged with the release. Local Desktop OAuth JSON remains available only as a developer fallback; otherwise the app stays in mock calendar mode."
                            TextWrapping="Wrap"
                            Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                            Margin="0,8,0,22" />
@@ -45,7 +45,7 @@
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                    Margin="0,6,0,8" />
-                        <TextBlock Text="Required local Desktop OAuth JSON path:"
+                        <TextBlock Text="Selected OAuth client path:"
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource OverlayTextSecondaryBrush}"
                                    Margin="0,4,0,2" />
@@ -54,7 +54,7 @@
                                    Foreground="{DynamicResource OverlayTextMutedBrush}"
                                    FontSize="11"
                                    Margin="0,0,0,6" />
-                        <TextBlock Text="Credentials and tokens are not bundled with releases. Disconnect deletes the local token/cache state."
+                        <TextBlock Text="Official OAuth client files are injected during release packaging; token/cache state remains local and Disconnect deletes it."
                                    TextWrapping="Wrap"
                                    Foreground="{DynamicResource OverlayTextMutedBrush}"
                                    FontSize="11"

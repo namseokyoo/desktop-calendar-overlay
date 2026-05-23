@@ -2,20 +2,27 @@
 
 ## Current state
 
-v0.8.0 Google Calendar sync is `developer/tester mode`. This build contains Google Calendar read/create/update/delete integration for allowed test users who provide a local Google Cloud **Desktop app** OAuth client JSON. Without that local JSON and token, it safely falls back to mock calendar data. No OAuth client secrets, refresh tokens, access tokens, or Google Cloud configuration are committed to the repo.
+v0.95 Google Calendar sync is **official OAuth client-first**. The app can read calendars and perform user-initiated create/update/delete operations through Google Calendar APIs when an official app-owned Desktop OAuth JSON is supplied by the release process. If the official file is absent, a local Desktop OAuth JSON remains available as a developer fallback. If neither OAuth client file nor token is available, the app safely falls back to mock calendar data.
 
-This is not normal consumer OAuth onboarding. There is no official public OAuth client mode, backend OAuth broker, service account flow, installer, MSIX package, or auto-update in v0.8.0.
+No OAuth client JSON, refresh tokens, access tokens, Google Cloud project configuration, or user calendar data should be committed to the repo.
 
-## OAuth mode for developer/tester release
+## OAuth mode for release candidates
 
-- Use Google OAuth testing mode for v0.8 developer/tester validation.
-- Add only explicit test users while the OAuth consent screen is unverified.
+- Use the official app-owned Google Cloud Desktop OAuth client for public/release-candidate validation.
+- Use Google OAuth testing mode and explicit test users until the OAuth consent screen is verified.
+- Keep local BYO OAuth JSON only as a developer fallback.
 - Request the minimum scopes needed for calendar read and user-initiated event create/update/delete.
 - Explain in Settings that access is used to read calendars and create/update/delete events only when the user explicitly saves or confirms one.
 
-## Local OAuth file locations
+## OAuth file locations
 
-For local testing, place the downloaded Google Cloud **Desktop app** OAuth JSON here on Windows:
+Official-client lookup order:
+
+1. `DCO_GOOGLE_OAUTH_CLIENT_JSON` environment variable path.
+2. `google-oauth-client.official.json` beside `DesktopCalendarOverlay.exe`.
+3. `%LOCALAPPDATA%\DesktopCalendarOverlay\google-oauth-client.official.json` for manual smoke.
+
+Developer fallback path:
 
 ```text
 %LOCALAPPDATA%\DesktopCalendarOverlay\google-oauth-client.json
@@ -33,11 +40,13 @@ The token store is local-only and must not be committed, copied into release art
 
 Settings must present one of these user-readable states:
 
-- `Mock mode: no OAuth JSON found.` The local Desktop OAuth JSON is missing and the app uses mock calendar data.
-- `Ready to connect: OAuth JSON found, not connected.` The local Desktop OAuth JSON exists, no local token is active, and Connect can start the OAuth browser flow for an allowed test user.
-- `Connected: Google Calendar sync enabled.` The local Desktop OAuth JSON and token store are present, and real Google Calendar sync is active.
+- `Mock mode: no official OAuth client configured.` No official or fallback OAuth client is available and the app uses mock calendar data.
+- `Ready to connect: official OAuth client available, not connected.` The official app OAuth client is selected and Connect can start the OAuth browser flow.
+- `Connected: Google Calendar sync enabled via official OAuth client.` The official app OAuth client and local token store are active.
+- `Ready to connect: local OAuth JSON found, not connected.` Developer fallback is selected because official config is absent.
+- `Connected: Google Calendar sync enabled via local OAuth JSON.` Developer fallback is connected.
 
-Disconnect deletes `%LOCALAPPDATA%\DesktopCalendarOverlay\google-token-store` and returns the app to mock fallback after refresh/restart. The local Desktop OAuth JSON remains local and must be removed manually if the tester no longer wants the app to offer Connect.
+Disconnect deletes `%LOCALAPPDATA%\DesktopCalendarOverlay\google-token-store` and returns the app to fallback behavior after refresh/restart. OAuth client JSON files remain where they are and must be removed from their source path if the user no longer wants the app to offer Connect.
 
 ## Narrow CRUD write policy
 
@@ -64,6 +73,7 @@ Guidance:
 - Store refresh tokens only in OS-protected storage.
 - Store non-sensitive settings, such as selected calendar layer IDs and window placement, separately from secrets.
 - Provide a Settings action to disconnect Google and delete local tokens/cache.
+- Do not commit or log official OAuth client JSON; inject it only through approved release packaging or local smoke paths.
 
 ## Logging policy
 

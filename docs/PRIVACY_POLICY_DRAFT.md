@@ -43,5 +43,5 @@ Diagnostics are intended for local troubleshooting. Release artifacts must not i
 ## Current milestone limitations
 
 - Google OAuth verification is not approved yet.
-- The current Google integration remains a developer/tester-mode BYO OAuth JSON path unless and until an official verified OAuth client path is completed.
+- The app now prefers an official app-owned OAuth client file when it is injected by the release process; local BYO OAuth JSON remains a developer fallback until official verification and Windows smoke are complete.
 - This draft is not legal advice and needs final review before public distribution.

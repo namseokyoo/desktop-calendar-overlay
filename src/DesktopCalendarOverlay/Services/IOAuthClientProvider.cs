@@ -6,7 +6,7 @@ public enum OAuthClientAvailability
 {
     Missing,
     LocalJson,
-    FutureOfficial
+    Official
 }
 
 public interface IOAuthClientProvider

@@ -47,6 +47,30 @@ public sealed class CalendarServiceRouterTests
         Assert.Equal("test-token-store", Path.GetFileName(router.TokenDirectory));
     }
 
+    [Fact]
+    public void CompositeOAuthClientProviderPrefersOfficialClient()
+    {
+        var official = new FakeOAuthClientProvider(OAuthClientAvailability.Official, "official-client.json");
+        var localJson = new FakeOAuthClientProvider(OAuthClientAvailability.LocalJson, "local-client.json");
+        var provider = new CompositeOAuthClientProvider(official, localJson);
+
+        Assert.True(provider.IsClientSecretAvailable);
+        Assert.Equal(OAuthClientAvailability.Official, provider.Availability);
+        Assert.Equal("official-client.json", Path.GetFileName(provider.ClientSecretPath));
+    }
+
+    [Fact]
+    public void CompositeOAuthClientProviderFallsBackToLocalJsonForDevelopers()
+    {
+        var official = new FakeOAuthClientProvider(OAuthClientAvailability.Missing, "official-client.json");
+        var localJson = new FakeOAuthClientProvider(OAuthClientAvailability.LocalJson, "local-client.json");
+        var provider = new CompositeOAuthClientProvider(official, localJson);
+
+        Assert.True(provider.IsClientSecretAvailable);
+        Assert.Equal(OAuthClientAvailability.LocalJson, provider.Availability);
+        Assert.Equal("local-client.json", Path.GetFileName(provider.ClientSecretPath));
+    }
+
     private static CalendarServiceRouter CreateRouter(bool hasStoredToken, OAuthClientAvailability availability)
     {
         var settingsStore = new InMemorySettingsStore();
@@ -67,11 +91,13 @@ public sealed class CalendarServiceRouterTests
         public Task ClearAsync(CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
-    private sealed class FakeOAuthClientProvider(OAuthClientAvailability availability) : IOAuthClientProvider
+    private sealed class FakeOAuthClientProvider(
+        OAuthClientAvailability availability,
+        string clientSecretFileName = "test-client.json") : IOAuthClientProvider
     {
         public OAuthClientAvailability Availability => availability;
 
-        public string ClientSecretPath => Path.Combine(Path.GetTempPath(), "test-client.json");
+        public string ClientSecretPath => Path.Combine(Path.GetTempPath(), clientSecretFileName);
 
         public bool IsClientSecretAvailable => availability != OAuthClientAvailability.Missing;
 

@@ -3,10 +3,13 @@
 
 $ErrorActionPreference = "Stop"
 
+$Solution = Join-Path $PSScriptRoot "..\DesktopCalendarOverlay.sln"
 $Project = Join-Path $PSScriptRoot "..\src\DesktopCalendarOverlay\DesktopCalendarOverlay.csproj"
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
 
 Write-Host "== host =="
 Write-Host "OS: $([System.Environment]::OSVersion.VersionString)"
+Write-Host "Repo: $RepoRoot"
 
 Write-Host "== dotnet info =="
 dotnet --info
@@ -16,24 +19,35 @@ Select-String -Path $Project -Pattern "<TargetFramework>net8.0-windows</TargetFr
     Write-Host $_.Line.Trim()
 }
 
-Write-Host "== restore =="
-dotnet restore $Project
+Write-Host "== restore solution =="
+dotnet restore $Solution
 
-Write-Host "== build =="
-dotnet build $Project -c Debug --no-restore
+Write-Host "== build solution =="
+dotnet build $Solution --no-restore
+
+Write-Host "== test solution =="
+dotnet test $Solution --no-restore
 
 Write-Host "== run command =="
 Write-Host "dotnet run --project $Project"
 
+Write-Host "== release artifact hygiene checklist =="
+Write-Host "Before publishing a ZIP, inspect the artifact and confirm:"
+Write-Host "[ ] ZIP contains the expected Desktop Calendar Overlay app files only."
+Write-Host "[ ] ZIP does not contain google-oauth-client.json or any OAuth JSON."
+Write-Host "[ ] ZIP does not contain google-token-store or other token/cache folders."
+Write-Host "[ ] ZIP does not contain logs, local settings, screenshots with private calendar data, or private calendar exports."
+Write-Host "[ ] Version label and release notes match the intended release."
+
 Write-Host "== manual visual validation checklist =="
-Write-Host "Canonical v0.8.0 checklist: docs/QA_CHECKLIST_v0.8.0.md"
+Write-Host "Canonical v0.9.0 checklist: docs/QA_CHECKLIST_v0.9.0.md"
 Write-Host "[ ] Borderless window opens with custom chrome only."
 Write-Host "[ ] Dragging the title area moves the window; double-click toggles maximize/restore."
 Write-Host "[ ] Resize works on all edges and corners."
 Write-Host "[ ] Position lock disables move/resize and persists after restart."
 Write-Host "[ ] Move/resize, close, and reopen restores placement."
 Write-Host "[ ] First launch without OAuth JSON shows mock mode and mock calendar data."
-Write-Host "[ ] Settings shows mock, ready-to-connect, and connected Google auth states as applicable."
+Write-Host "[ ] Settings shows missing client, local JSON, and connected Google auth states as applicable."
 Write-Host "[ ] Connect works only with local Desktop OAuth JSON and an allowed test user."
 Write-Host "[ ] Create/edit/delete failures show user-readable errors and do not crash."
 Write-Host "[ ] Disconnect deletes the token store and returns to mock fallback after refresh/restart."

@@ -74,6 +74,7 @@ Guidance:
 - Store non-sensitive settings, such as selected calendar layer IDs and window placement, separately from secrets.
 - Provide a Settings action to disconnect Google and delete local tokens/cache.
 - Do not commit or log official OAuth client JSON; inject it only through approved release packaging or local smoke paths.
+- GitHub Actions release packaging may inject the official Desktop OAuth JSON from the repository secret `DCO_GOOGLE_OAUTH_CLIENT_JSON_B64` (base64-encoded JSON) into the publish output as `google-oauth-client.official.json` before the ZIP is created. The secret value itself must not be printed in logs or committed.
 
 ## Logging policy
 

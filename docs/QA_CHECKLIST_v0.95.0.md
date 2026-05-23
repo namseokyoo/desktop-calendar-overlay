@@ -28,7 +28,7 @@ Use this checklist before tagging or merging the official OAuth client transitio
 
 ## Release artifact audit
 
-- [ ] The official OAuth JSON is included only through the approved release packaging path.
+- [ ] The official OAuth JSON is included only through the approved release packaging path (`DCO_GOOGLE_OAUTH_CLIENT_JSON_B64` GitHub secret or equivalent local smoke path).
 - [ ] The artifact does not contain local developer BYO JSON.
 - [ ] The artifact does not contain token stores, logs, screenshots with private calendar data, or exported calendar payloads.
 - [ ] The release notes describe official OAuth as the primary path and local JSON as developer fallback.

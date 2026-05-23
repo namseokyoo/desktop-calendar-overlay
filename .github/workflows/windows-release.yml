@@ -44,6 +44,20 @@ jobs:
           -p:EnableCompressionInSingleFile=true
           --output .\artifacts\publish\desktop-calendar-overlay-win-x64
 
+      - name: Inject official Google OAuth desktop client when configured
+        if: ${{ secrets.DCO_GOOGLE_OAUTH_CLIENT_JSON_B64 != '' }}
+        shell: pwsh
+        env:
+          DCO_GOOGLE_OAUTH_CLIENT_JSON_B64: ${{ secrets.DCO_GOOGLE_OAUTH_CLIENT_JSON_B64 }}
+        run: |
+          $target = '.\artifacts\publish\desktop-calendar-overlay-win-x64\google-oauth-client.official.json'
+          [System.IO.File]::WriteAllBytes($target, [Convert]::FromBase64String($env:DCO_GOOGLE_OAUTH_CLIENT_JSON_B64))
+          $json = Get-Content -Raw -Path $target | ConvertFrom-Json
+          if (-not $json.installed.client_id -or -not $json.installed.client_secret) {
+            throw 'Official Google OAuth client secret must be a Desktop app JSON with installed.client_id and installed.client_secret.'
+          }
+          Write-Host 'Official Google OAuth client JSON injected into publish output.'
+
       - name: Create release zips
         shell: pwsh
         run: |

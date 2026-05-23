@@ -45,11 +45,15 @@ jobs:
           --output .\artifacts\publish\desktop-calendar-overlay-win-x64
 
       - name: Inject official Google OAuth desktop client when configured
-        if: ${{ secrets.DCO_GOOGLE_OAUTH_CLIENT_JSON_B64 != '' }}
         shell: pwsh
         env:
           DCO_GOOGLE_OAUTH_CLIENT_JSON_B64: ${{ secrets.DCO_GOOGLE_OAUTH_CLIENT_JSON_B64 }}
         run: |
+          if ([string]::IsNullOrWhiteSpace($env:DCO_GOOGLE_OAUTH_CLIENT_JSON_B64)) {
+            Write-Host 'Official Google OAuth client JSON secret is not configured; skipping injection.'
+            return
+          }
+
           $target = '.\artifacts\publish\desktop-calendar-overlay-win-x64\google-oauth-client.official.json'
           [System.IO.File]::WriteAllBytes($target, [Convert]::FromBase64String($env:DCO_GOOGLE_OAUTH_CLIENT_JSON_B64))
           $json = Get-Content -Raw -Path $target | ConvertFrom-Json

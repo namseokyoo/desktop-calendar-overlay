@@ -11,9 +11,9 @@ public sealed class JsonSettingsStore : ISettingsStore
         WriteIndented = true
     };
 
-    public JsonSettingsStore()
+    public JsonSettingsStore(string? settingsDirectory = null)
     {
-        _settingsDirectory = Path.Combine(
+        _settingsDirectory = settingsDirectory ?? Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             "DesktopCalendarOverlay");
     }

@@ -6,6 +6,8 @@ public interface IGoogleCalendarIntegration
 
     string TokenDirectory { get; }
 
+    OAuthClientAvailability OAuthClientAvailability { get; }
+
     bool IsClientSecretAvailable { get; }
 
     bool HasStoredToken { get; }

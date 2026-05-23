@@ -135,7 +135,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public string MonthTitle => _visibleMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
 
-    public string VersionLabel => "v0.8.0-developer-test";
+    public string VersionLabel => "v0.9.0-public-readiness";
 
     public bool IsBusy
     {
@@ -346,14 +346,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 return "Mock mode: Google integration unavailable.";
             }
 
-            if (!_googleIntegration.IsClientSecretAvailable)
+            if (_googleIntegration.OAuthClientAvailability == OAuthClientAvailability.Missing)
             {
                 return "Mock mode: no OAuth JSON found.";
             }
 
-            return _googleIntegration.IsUsingGoogle
-                ? "Connected: Google Calendar sync enabled."
-                : "Ready to connect: OAuth JSON found, not connected.";
+            return _googleIntegration.OAuthClientAvailability switch
+            {
+                OAuthClientAvailability.LocalJson when _googleIntegration.IsUsingGoogle =>
+                    "Connected: Google Calendar sync enabled via local OAuth JSON.",
+                OAuthClientAvailability.LocalJson =>
+                    "Ready to connect: local OAuth JSON found, not connected.",
+                OAuthClientAvailability.FutureOfficial when _googleIntegration.IsUsingGoogle =>
+                    "Connected: Google Calendar sync enabled via official OAuth client.",
+                OAuthClientAvailability.FutureOfficial =>
+                    "Ready to connect: official OAuth client available, not connected.",
+                _ => "Mock mode: no OAuth client available."
+            };
         }
     }
 
@@ -366,14 +375,23 @@ public sealed class MainViewModel : INotifyPropertyChanged
                 return "This build cannot load Google Calendar integration and will use mock calendar data.";
             }
 
-            if (!_googleIntegration.IsClientSecretAvailable)
+            if (_googleIntegration.OAuthClientAvailability == OAuthClientAvailability.Missing)
             {
                 return "Developer/tester mode is using mock calendar data. Add the local Desktop OAuth JSON to enable Connect.";
             }
 
-            return _googleIntegration.IsUsingGoogle
-                ? "Disconnect removes local token/cache state and returns the app to mock fallback after refresh or restart."
-                : "Developer/tester mode is ready. Connect opens the Google OAuth browser flow for an allowed test user.";
+            return _googleIntegration.OAuthClientAvailability switch
+            {
+                OAuthClientAvailability.LocalJson when _googleIntegration.IsUsingGoogle =>
+                    "Disconnect removes local token/cache state and returns the app to mock fallback after refresh or restart.",
+                OAuthClientAvailability.LocalJson =>
+                    "Developer/tester mode is ready. Connect opens the Google OAuth browser flow for an allowed test user.",
+                OAuthClientAvailability.FutureOfficial when _googleIntegration.IsUsingGoogle =>
+                    "Disconnect removes local token/cache state and returns the app to mock fallback after refresh or restart.",
+                OAuthClientAvailability.FutureOfficial =>
+                    "Official OAuth client mode is available but must still complete Google sign-in before sync starts.",
+                _ => "Developer/tester mode is using mock calendar data. Add the local Desktop OAuth JSON to enable Connect."
+            };
         }
     }
 

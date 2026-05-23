@@ -5,15 +5,17 @@ using Google.Apis.Auth.OAuth2;
 using Google.Apis.Calendar.v3;
 using Google.Apis.Calendar.v3.Data;
 using Google.Apis.Services;
-using Google.Apis.Util.Store;
 using GoogleCalendarApi = Google.Apis.Calendar.v3.CalendarService;
 
 namespace DesktopCalendarOverlay.Services;
 
-public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalendarService, IGoogleCalendarIntegration
+public sealed class GoogleCalendarService : ICalendarService, IGoogleCalendarIntegration
 {
     private const string ApplicationName = "Desktop Calendar Overlay";
     private const string LayerVisibilityKey = "google-calendar-layer-visibility";
+    private readonly ISettingsStore _settingsStore;
+    private readonly ITokenStore _tokenStore;
+    private readonly IOAuthClientProvider _oauthClientProvider;
 
     private static readonly string[] Scopes =
     [
@@ -21,34 +23,25 @@ public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalen
         CalendarService.Scope.CalendarEvents
     ];
 
-    public string ClientSecretPath { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "DesktopCalendarOverlay",
-        "google-oauth-client.json");
-
-    public string TokenDirectory { get; } = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-        "DesktopCalendarOverlay",
-        "google-token-store");
-
-    public bool IsClientSecretAvailable => File.Exists(ClientSecretPath);
-
-    public bool HasStoredToken
+    public GoogleCalendarService(
+        ISettingsStore settingsStore,
+        ITokenStore? tokenStore = null,
+        IOAuthClientProvider? oauthClientProvider = null)
     {
-        get
-        {
-            try
-            {
-                return Directory.Exists(TokenDirectory) &&
-                    Directory.EnumerateFiles(TokenDirectory, "*", SearchOption.AllDirectories).Any();
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-            {
-                AppDiagnostics.Error("Unable to inspect Google Calendar token store.", ex);
-                return false;
-            }
-        }
+        _settingsStore = settingsStore;
+        _tokenStore = tokenStore ?? new LocalGoogleTokenStore();
+        _oauthClientProvider = oauthClientProvider ?? new LocalJsonOAuthClientProvider();
     }
+
+    public string ClientSecretPath => _oauthClientProvider.ClientSecretPath;
+
+    public string TokenDirectory => _tokenStore.TokenDirectory;
+
+    public OAuthClientAvailability OAuthClientAvailability => _oauthClientProvider.Availability;
+
+    public bool IsClientSecretAvailable => _oauthClientProvider.IsClientSecretAvailable;
+
+    public bool HasStoredToken => _tokenStore.HasStoredToken;
 
     public bool IsUsingGoogle => IsClientSecretAvailable && HasStoredToken;
 
@@ -63,17 +56,10 @@ public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalen
         AppDiagnostics.Info("Google Calendar authorization completed.");
     }
 
-    public Task DisconnectAsync(CancellationToken cancellationToken = default)
+    public async Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        if (Directory.Exists(TokenDirectory))
-        {
-            ClearReadOnlyAttributes(TokenDirectory);
-            Directory.Delete(TokenDirectory, recursive: true);
-        }
-
+        await _tokenStore.ClearAsync(cancellationToken);
         AppDiagnostics.Info("Google Calendar local token store deleted.");
-        return Task.CompletedTask;
     }
 
     public async Task<IReadOnlyList<CalendarLayer>> GetLayersAsync(CancellationToken cancellationToken = default)
@@ -260,7 +246,7 @@ public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalen
         cancellationToken.ThrowIfCancellationRequested();
         var visibility = LoadVisibilityOverrides();
         visibility[calendarLayerId] = isVisible;
-        settingsStore.Write(LayerVisibilityKey, visibility);
+        _settingsStore.Write(LayerVisibilityKey, visibility);
         AppDiagnostics.Info($"Google calendar layer visibility saved for calendar '{calendarLayerId}': {isVisible}");
         return Task.CompletedTask;
     }
@@ -272,14 +258,13 @@ public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalen
             throw new FileNotFoundException("Google OAuth desktop client JSON was not found.", ClientSecretPath);
         }
 
-        await using var stream = File.OpenRead(ClientSecretPath);
-        var secrets = GoogleClientSecrets.FromStream(stream).Secrets;
+        var secrets = await _oauthClientProvider.LoadClientSecretsAsync(cancellationToken);
         var credential = await GoogleWebAuthorizationBroker.AuthorizeAsync(
             secrets,
             Scopes,
             "default-user",
             cancellationToken,
-            new FileDataStore(TokenDirectory, fullPath: true));
+            _tokenStore.CreateDataStore());
 
         if (forceAuthorization && string.IsNullOrWhiteSpace(credential.Token.RefreshToken) && !HasStoredToken)
         {
@@ -294,19 +279,7 @@ public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalen
     }
 
     private Dictionary<string, bool> LoadVisibilityOverrides() =>
-        settingsStore.Read<Dictionary<string, bool>>(LayerVisibilityKey) ?? [];
-
-    private static void ClearReadOnlyAttributes(string directory)
-    {
-        foreach (var path in Directory.EnumerateFileSystemEntries(directory, "*", SearchOption.AllDirectories))
-        {
-            var attributes = File.GetAttributes(path);
-            if ((attributes & FileAttributes.ReadOnly) != 0)
-            {
-                File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
-            }
-        }
-    }
+        _settingsStore.Read<Dictionary<string, bool>>(LayerVisibilityKey) ?? [];
 
     private static CalendarEvent? MapEvent(string layerId, Event item)
     {

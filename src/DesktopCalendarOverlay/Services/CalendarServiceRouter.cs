@@ -10,6 +10,8 @@ public sealed class CalendarServiceRouter(
 
     public string TokenDirectory => googleCalendarService.TokenDirectory;
 
+    public OAuthClientAvailability OAuthClientAvailability => googleCalendarService.OAuthClientAvailability;
+
     public bool IsClientSecretAvailable => googleCalendarService.IsClientSecretAvailable;
 
     public bool HasStoredToken => googleCalendarService.HasStoredToken;

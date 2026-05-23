@@ -33,8 +33,22 @@ public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalen
 
     public bool IsClientSecretAvailable => File.Exists(ClientSecretPath);
 
-    public bool HasStoredToken => Directory.Exists(TokenDirectory) &&
-        Directory.EnumerateFiles(TokenDirectory, "*", SearchOption.AllDirectories).Any();
+    public bool HasStoredToken
+    {
+        get
+        {
+            try
+            {
+                return Directory.Exists(TokenDirectory) &&
+                    Directory.EnumerateFiles(TokenDirectory, "*", SearchOption.AllDirectories).Any();
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                AppDiagnostics.Error("Unable to inspect Google Calendar token store.", ex);
+                return false;
+            }
+        }
+    }
 
     public bool IsUsingGoogle => IsClientSecretAvailable && HasStoredToken;
 
@@ -51,8 +65,10 @@ public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalen
 
     public Task DisconnectAsync(CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (Directory.Exists(TokenDirectory))
         {
+            ClearReadOnlyAttributes(TokenDirectory);
             Directory.Delete(TokenDirectory, recursive: true);
         }
 
@@ -241,6 +257,7 @@ public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalen
 
     public Task SetLayerVisibilityAsync(string calendarLayerId, bool isVisible, CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var visibility = LoadVisibilityOverrides();
         visibility[calendarLayerId] = isVisible;
         settingsStore.Write(LayerVisibilityKey, visibility);
@@ -278,6 +295,18 @@ public sealed class GoogleCalendarService(ISettingsStore settingsStore) : ICalen
 
     private Dictionary<string, bool> LoadVisibilityOverrides() =>
         settingsStore.Read<Dictionary<string, bool>>(LayerVisibilityKey) ?? [];
+
+    private static void ClearReadOnlyAttributes(string directory)
+    {
+        foreach (var path in Directory.EnumerateFileSystemEntries(directory, "*", SearchOption.AllDirectories))
+        {
+            var attributes = File.GetAttributes(path);
+            if ((attributes & FileAttributes.ReadOnly) != 0)
+            {
+                File.SetAttributes(path, attributes & ~FileAttributes.ReadOnly);
+            }
+        }
+    }
 
     private static CalendarEvent? MapEvent(string layerId, Event item)
     {

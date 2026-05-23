@@ -29,7 +29,7 @@ public partial class App : System.Windows.Application
             }
             else
             {
-                AppDiagnostics.Info($"Unhandled app-domain exception object: {args.ExceptionObject}");
+                AppDiagnostics.Info($"Unhandled app-domain exception object type: {args.ExceptionObject?.GetType().FullName ?? "unknown"}");
             }
         };
 

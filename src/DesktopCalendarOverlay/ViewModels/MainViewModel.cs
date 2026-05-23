@@ -135,7 +135,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
 
     public string MonthTitle => _visibleMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
 
-    public string VersionLabel => "v0.7.1-portfolio-readiness";
+    public string VersionLabel => "v0.8.0-developer-test";
 
     public bool IsBusy
     {
@@ -343,17 +343,37 @@ public sealed class MainViewModel : INotifyPropertyChanged
         {
             if (_googleIntegration is null)
             {
-                return "Google integration unavailable";
+                return "Mock mode: Google integration unavailable.";
             }
 
             if (!_googleIntegration.IsClientSecretAvailable)
             {
-                return "OAuth client JSON not found";
+                return "Mock mode: no OAuth JSON found.";
             }
 
             return _googleIntegration.IsUsingGoogle
-                ? "Connected to Google Calendar"
-                : "OAuth client found; not connected yet";
+                ? "Connected: Google Calendar sync enabled."
+                : "Ready to connect: OAuth JSON found, not connected.";
+        }
+    }
+
+    public string GoogleConnectionDetail
+    {
+        get
+        {
+            if (_googleIntegration is null)
+            {
+                return "This build cannot load Google Calendar integration and will use mock calendar data.";
+            }
+
+            if (!_googleIntegration.IsClientSecretAvailable)
+            {
+                return "Developer/tester mode is using mock calendar data. Add the local Desktop OAuth JSON to enable Connect.";
+            }
+
+            return _googleIntegration.IsUsingGoogle
+                ? "Disconnect removes local token/cache state and returns the app to mock fallback after refresh or restart."
+                : "Developer/tester mode is ready. Connect opens the Google OAuth browser flow for an allowed test user.";
         }
     }
 
@@ -481,11 +501,13 @@ public sealed class MainViewModel : INotifyPropertyChanged
             await _googleIntegration.DisconnectAsync();
             NotifyGoogleStateChanged();
             await LoadCalendarAsync();
+            StatusText = "Google disconnected. Local token/cache state deleted; mock calendar fallback is active.";
         }
         catch (Exception ex)
         {
             AppDiagnostics.Error("Google Calendar disconnect failed.", ex);
             StatusText = FriendlyErrorMessage("Google disconnect failed", ex);
+            NotifyGoogleStateChanged();
         }
         finally
         {
@@ -580,6 +602,7 @@ public sealed class MainViewModel : INotifyPropertyChanged
     private void NotifyGoogleStateChanged()
     {
         OnPropertyChanged(nameof(GoogleConnectionStatus));
+        OnPropertyChanged(nameof(GoogleConnectionDetail));
         OnPropertyChanged(nameof(GoogleClientSecretPath));
         OnPropertyChanged(nameof(GoogleTokenDirectory));
         OnPropertyChanged(nameof(IsGoogleConnected));
